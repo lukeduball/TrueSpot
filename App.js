@@ -7,23 +7,26 @@ class MapImage extends Component
   {
     onPress: () => null,
     numberOfTouches: 2,
-    screenWidth: Math.round(Dimensions.get('window').width),
-    maxWidth: 1473*2
   };
 
   constructor(props)
   {
     super(props);
     this.lastTouchDistance = 0.0;
+    this.lastPanX = 0;
+    this.lastPanY = 0;
+    this.screenWidth = Math.round(Dimensions.get('window').width);
+    this.screenHeight = Math.round(Dimensions.get('window').height);
+    this.maxWidth = 1473 * 2;
     var w = 1473;
-    var x = (this.props.screenWidth - w) / 2;
+    var x = -1266; 
+    //-this.screenWidth / 2;
+    //(this.screenWidth - w) / 2;
     this.state = {xPos: x,
-                  yPos: 0,
+                  yPos: -this.screenHeight / 2,
                   width: w, 
                   height: 1652, 
-                  rotation: 0, 
-                  lastPanX: 0, 
-                  lastPanY: 0};
+                  rotation: 0};
   }
 
   onStartShouldSetResponder = (evt) =>
@@ -38,7 +41,8 @@ class MapImage extends Component
     }
     else if(evt.nativeEvent.touches.length == 1)
     {
-      this.setState({lastPanX : evt.nativeEvent.touches[0].locationX, lastPanY: evt.nativeEvent.touches[0].locationY});
+      this.lastPanX = evt.nativeEvent.touches[0].locationX;
+      this.lastPanY = evt.nativeEvent.touches[0].locationY;
       return true;
     }
 
@@ -52,37 +56,55 @@ class MapImage extends Component
       var touchDiffX = evt.nativeEvent.touches[0].locationX - evt.nativeEvent.touches[1].locationX;
       var touchDiffY = evt.nativeEvent.touches[0].locationY - evt.nativeEvent.touches[1].locationY;
       var distance = Math.sqrt(touchDiffX * touchDiffX + touchDiffY * touchDiffY);
-      this.lastTouchDistance = distance;
-      if(lastTouchDistance === 0)
+      if(this.lastTouchDistance === 0)
       {
         return;
       }
       var zoom = distance / this.lastTouchDistance;
       var newWidth = this.state.width * zoom;
       var newHeight = this.state.height * zoom;
-      if(newWidth < this.props.screenWidth)
+      if(newWidth < this.screenWidth)
       {
         var ratio = newHeight / newWidth;
-        newWidth = this.props.screenWidth;
+        newWidth = this.screenWidth;
         newHeight = ratio * newWidth;
       }
-      else if(newWidth > this.props.maxWidth)
+      else if(newWidth > this.maxWidth)
       {
         var ratio = newHeight / newWidth;
-        newWidth = this.props.maxWidth;
+        newWidth = this.maxWidth;
         newHeight = ratio * newWidth;
       }
+      this.lastTouchDistance = distance;
       this.setState({width: newWidth, height: newHeight});
     }
     else if(evt.nativeEvent.touches.length == 1)
     {
-      var diffX = evt.nativeEvent.touches[0].locationX - this.state.lastPanX;
-      var diffY = evt.nativeEvent.touches[0].locationY - this.state.lastPanY;
-      var dampner = 0.1;
-      this.setState({xPos: this.state.xPos + diffX * dampner,
-                     yPos: this.state.yPos + diffY * dampner,
+      var diffX = evt.nativeEvent.touches[0].locationX - this.lastPanX;
+      var diffY = evt.nativeEvent.touches[0].locationY - this.lastPanY;
+      var dampner = 0.5;
+      var newXPos = this.state.xPos + diffX * dampner;
+      var newYPos = this.state.yPos + diffY * dampner;
+      //Condition so there is no blank space on the right of the screen when the image is moved
+      if(newXPos + this.state.width < this.screenWidth / 2)
+      {
+        newXPos = this.screenWidth / 2 - this.state.width;
+      }
+      //Condition to check if the image leaves blank space on the left of the screen
+      if(newXPos > -this.screenWidth / 2)
+      {
+        newXPos = -this.screenWidth / 2;
+      }
+
+      if(newYPos > -this.screenHeight / 2)
+      {
+        newYPos = -this.screenHeight / 2;
+      }
+      //TODO:: Add conditions to check for Y lower bound conditions
+
+      this.setState({xPos: newXPos,
+                     yPos: newYPos,
       });
-      console.log('Pan X: ' + diffX + ' Y: ' + diffY);
     }
   }
 
@@ -101,6 +123,7 @@ class MapImage extends Component
           {this.props.children}
         <Image
           style = {{
+          position : 'absolute',
           top: this.state.yPos,
           left: this.state.xPos,
           width: this.state.width,
