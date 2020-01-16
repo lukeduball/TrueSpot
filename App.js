@@ -19,11 +19,10 @@ class MapImage extends Component
     this.screenHeight = Math.round(Dimensions.get('window').height);
     this.maxWidth = 1473 * 2;
     var w = 1473;
-    var x = -1266; 
-    //-this.screenWidth / 2;
+    var x = 0; 
     //(this.screenWidth - w) / 2;
     this.state = {xPos: x,
-                  yPos: -this.screenHeight / 2,
+                  yPos: 0,
                   width: w, 
                   height: 1652, 
                   rotation: 0};
@@ -86,19 +85,19 @@ class MapImage extends Component
       var newXPos = this.state.xPos + diffX * dampner;
       var newYPos = this.state.yPos + diffY * dampner;
       //Condition so there is no blank space on the right of the screen when the image is moved
-      if(newXPos + this.state.width < this.screenWidth / 2)
+      if(newXPos + this.state.width < this.screenWidth)
       {
-        newXPos = this.screenWidth / 2 - this.state.width;
+        newXPos = this.screenWidth - this.state.width;
       }
       //Condition to check if the image leaves blank space on the left of the screen
-      if(newXPos > -this.screenWidth / 2)
+      if(newXPos > 0)
       {
-        newXPos = -this.screenWidth / 2;
+        newXPos = 0;
       }
 
-      if(newYPos > -this.screenHeight / 2)
+      if(newYPos > 0)
       {
-        newYPos = -this.screenHeight / 2;
+        newYPos = 0;
       }
       //TODO:: Add conditions to check for Y lower bound conditions
 
@@ -142,10 +141,8 @@ export default class App extends Component
   render()
   {
     return (
-      <View style={styles.container}>
-        <MapImage onPress={() => console.log('Double Tap')} numberOfTouches={2}>
-        </MapImage>
-      </View>
+      <MapImage onPress={() => console.log('Double Tap')} numberOfTouches={2}>
+      </MapImage>
     );
   }
 }
