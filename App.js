@@ -28,6 +28,34 @@ class MapImage extends Component
                   rotation: 0};
   }
 
+  clampImageXToScreen(newXPos)
+  {
+    var val = newXPos;
+    //Condition so there is no blank space on the right of the screen when the image is moved
+    if(newXPos + this.state.width < this.screenWidth)
+    {
+      val = this.screenWidth - this.state.width;
+    }
+    //Condition to check if the image leaves blank space on the left of the screen
+    if(newXPos > 0)
+    {
+      val = 0;
+    }
+
+    return val;
+  }
+
+  clampImageYToScreen(newYPos)
+  {
+    var val = newYPos;
+    if(newYPos > 0)
+    {
+      val = 0;
+    }
+    //TODO:: Add conditions to check for Y lower bound conditions
+    return val;
+  }
+
   onStartShouldSetResponder = (evt) =>
   {
     if(evt.nativeEvent.touches.length == 2)
@@ -84,22 +112,9 @@ class MapImage extends Component
       var dampner = 0.5;
       var newXPos = this.state.xPos + diffX * dampner;
       var newYPos = this.state.yPos + diffY * dampner;
-      //Condition so there is no blank space on the right of the screen when the image is moved
-      if(newXPos + this.state.width < this.screenWidth)
-      {
-        newXPos = this.screenWidth - this.state.width;
-      }
-      //Condition to check if the image leaves blank space on the left of the screen
-      if(newXPos > 0)
-      {
-        newXPos = 0;
-      }
-
-      if(newYPos > 0)
-      {
-        newYPos = 0;
-      }
-      //TODO:: Add conditions to check for Y lower bound conditions
+      //Keeps map image from leaving blank space on the left and right of the screen
+      newXPos = this.clampImageXToScreen(newXPos);
+      newYPos = this.clampImageYToScreen(newYPos);
 
       this.setState({xPos: newXPos,
                      yPos: newYPos,
