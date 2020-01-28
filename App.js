@@ -14,6 +14,10 @@ class MapImage extends Component
   {
     super(props);
     this.lastTouchDistance = 0.0;
+    this.screenTouchX = null;
+    this.screenTouchY = null;
+    this.imageTouchX = null;
+    this.imageTouchY = null;
     this.lastPanX = 0;
     this.lastPanY = 0;
     this.screenWidth = Math.round(Dimensions.get('window').width);
@@ -32,15 +36,15 @@ class MapImage extends Component
                   height: this.NORMAL_IMAGE_HEIGHT};
   }
 
-  getImageSpaceXLocation(wth, xLoc)
+  getImageSpaceXLocation(wth, screenX)
   {
-    var coordX = (xLoc * this.NORMAL_IMAGE_WIDTH) / wth;
+    var coordX = ((screenX - this.state.xPos) * this.NORMAL_IMAGE_WIDTH) / wth;
     return coordX;
   }
 
-  getImageSpaceYLocation(hght, yLoc)
+  getImageSpaceYLocation(hght, screenY)
   {
-    var coordY = (yLoc * this.NORMAL_IMAGE_HEIGHT) / hght;
+    var coordY = ((screenY - this.state.yPos) * this.NORMAL_IMAGE_HEIGHT) / hght;
     return coordY;
   }
 
@@ -92,7 +96,6 @@ class MapImage extends Component
   {
     if(evt.nativeEvent.touches.length >= 2)
     {
-      console.log("Should run on every first touch");
       //This code seems not to update the lastTouchEvent and should just be handled by onResponderMove
       var touchDiffX = evt.nativeEvent.touches[0].locationX - evt.nativeEvent.touches[1].locationX;
       var touchDiffY = evt.nativeEvent.touches[0].locationY - evt.nativeEvent.touches[1].locationY;
@@ -102,7 +105,6 @@ class MapImage extends Component
     }
     else if(evt.nativeEvent.touches.length == 1)
     {
-      console.log('Single Touch for set responder');
       this.lastPanX = evt.nativeEvent.touches[0].locationX;
       this.lastPanY = evt.nativeEvent.touches[0].locationY;
       return true;
@@ -126,10 +128,13 @@ class MapImage extends Component
         return;
       }
 
-      var imageTouchX = ((evt.nativeEvent.touches[0].locationX) + (evt.nativeEvent.touches[1].locationX)) / 2.0;
-      var imageTouchY = ((evt.nativeEvent.touches[0].locationY) + (evt.nativeEvent.touches[1].locationY)) / 2.0;
-      var screenTouchX = ((evt.nativeEvent.touches[0].locationX + this.state.xPos) + (evt.nativeEvent.touches[1].locationX + this.state.xPos)) / 2.0;
-      var screenTouchY = ((evt.nativeEvent.touches[0].locationY + this.state.yPos) + (evt.nativeEvent.touches[1].locationY + this.state.yPos)) / 2.0;
+      if(this.imageTouchX == null && this.imageTouchY == null && this.screenTouchX == null && this.screenTouchY == null)
+      {
+        this.imageTouchX = ((evt.nativeEvent.touches[0].locationX) + (evt.nativeEvent.touches[1].locationX)) / 2.0;
+        this.imageTouchY = ((evt.nativeEvent.touches[0].locationY) + (evt.nativeEvent.touches[1].locationY)) / 2.0;
+        this.screenTouchX = ((evt.nativeEvent.touches[0].locationX + this.state.xPos) + (evt.nativeEvent.touches[1].locationX + this.state.xPos)) / 2.0;
+        this.screenTouchY = ((evt.nativeEvent.touches[0].locationY + this.state.yPos) + (evt.nativeEvent.touches[1].locationY + this.state.yPos)) / 2.0;
+      }
 
       var zoom = distance / this.lastTouchDistance;
       var newWidth = this.state.width * zoom;
@@ -147,11 +152,14 @@ class MapImage extends Component
         newHeight = ratio * newWidth;
       }
 
-      var imageCoordX = this.getImageSpaceXLocation(this.state.width, imageTouchX);
-      var imageCoordY = this.getImageSpaceYLocation(this.state.height, imageTouchY);
+      var imageCoordX = this.getImageSpaceXLocation(this.state.width, this.screenTouchX);
+      var imageCoordY = this.getImageSpaceYLocation(this.state.height, this.screenTouchY);
+      //console.log('ImageTouchX ' + this.imageTouchX + ' ImageTouchY ' + this.imageTouchY);
+      console.log('ImageCoordX ' + imageCoordX + ' ImageCoordY ' + imageCoordY);
+      console.log('ScreenCoordX ' + this.screenTouchX + ' ScreenCoordY ' + this.screenTouchY);
 
-      var newXPos = this.getScaledXPosLocation(newWidth, imageCoordX, screenTouchX);
-      var newYPos = this.getScaledYPosLocation(newHeight, imageCoordY, screenTouchY);
+      var newXPos = this.getScaledXPosLocation(newWidth, imageCoordX, this.screenTouchX);
+      var newYPos = this.getScaledYPosLocation(newHeight, imageCoordY, this.screenTouchY);
 
       newXPos = this.clampImageXToScreen(newXPos);
       newYPos = this.clampImageYToScreen(newYPos);
@@ -179,6 +187,11 @@ class MapImage extends Component
   onResponderRelease = (evt) => 
   {
     this.lastTouchDistance = 0.0;
+    this.imageTouchX = null;
+    this.imageTouchY = null;
+    this.screenTouchX = null;
+    this.screenTouchY = null;
+    console.log('Reset Coordinates');
     this.props.onPress();
   }
 
