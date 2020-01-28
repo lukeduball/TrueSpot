@@ -16,8 +16,6 @@ class MapImage extends Component
     this.lastTouchDistance = 0.0;
     this.screenTouchX = null;
     this.screenTouchY = null;
-    this.imageTouchX = null;
-    this.imageTouchY = null;
     this.lastPanX = 0;
     this.lastPanY = 0;
     this.screenWidth = Math.round(Dimensions.get('window').width);
@@ -26,10 +24,9 @@ class MapImage extends Component
     this.NORMAL_IMAGE_HEIGHT = 1652;
     this.maxWidth = 1473 * 2;
     var w = this.NORMAL_IMAGE_WIDTH;
-    var x = 300 - 752; 
-    var y = 300 - 1553;
+    var x = (this.screenWidth - w) / 2; 
+    var y = 0;
 
-    //(this.screenWidth - w) / 2;
     this.state = {xPos: x,
                   yPos: y,
                   width: w, 
@@ -128,10 +125,8 @@ class MapImage extends Component
         return;
       }
 
-      if(this.imageTouchX == null && this.imageTouchY == null && this.screenTouchX == null && this.screenTouchY == null)
+      if(this.screenTouchX == null && this.screenTouchY == null)
       {
-        this.imageTouchX = ((evt.nativeEvent.touches[0].locationX) + (evt.nativeEvent.touches[1].locationX)) / 2.0;
-        this.imageTouchY = ((evt.nativeEvent.touches[0].locationY) + (evt.nativeEvent.touches[1].locationY)) / 2.0;
         this.screenTouchX = ((evt.nativeEvent.touches[0].locationX + this.state.xPos) + (evt.nativeEvent.touches[1].locationX + this.state.xPos)) / 2.0;
         this.screenTouchY = ((evt.nativeEvent.touches[0].locationY + this.state.yPos) + (evt.nativeEvent.touches[1].locationY + this.state.yPos)) / 2.0;
       }
@@ -139,12 +134,14 @@ class MapImage extends Component
       var zoom = distance / this.lastTouchDistance;
       var newWidth = this.state.width * zoom;
       var newHeight = this.state.height * zoom;
+      //Ensures the width of the image can not be less than the screen width while keeping the aspect ratio with the height
       if(newWidth < this.screenWidth)
       {
         var ratio = newHeight / newWidth;
         newWidth = this.screenWidth;
         newHeight = ratio * newWidth;
       }
+      //Ensures the width of the image can not be greater than the max width specified while keeping the aspect ratio with the height
       else if(newWidth > this.maxWidth)
       {
         var ratio = newHeight / newWidth;
@@ -152,15 +149,13 @@ class MapImage extends Component
         newHeight = ratio * newWidth;
       }
 
+      //Converts the touch coordiantes into a image based coordinate
       var imageCoordX = this.getImageSpaceXLocation(this.state.width, this.screenTouchX);
       var imageCoordY = this.getImageSpaceYLocation(this.state.height, this.screenTouchY);
-      //console.log('ImageTouchX ' + this.imageTouchX + ' ImageTouchY ' + this.imageTouchY);
-      console.log('ImageCoordX ' + imageCoordX + ' ImageCoordY ' + imageCoordY);
-      console.log('ScreenCoordX ' + this.screenTouchX + ' ScreenCoordY ' + this.screenTouchY);
-
+      //Gets the new position of the image to keep the image coordinate at the same touch location on the screen
       var newXPos = this.getScaledXPosLocation(newWidth, imageCoordX, this.screenTouchX);
       var newYPos = this.getScaledYPosLocation(newHeight, imageCoordY, this.screenTouchY);
-
+      //Ensure that when applying the new location that the image stays on the screen without leaving blank space
       newXPos = this.clampImageXToScreen(newXPos);
       newYPos = this.clampImageYToScreen(newYPos);
 
@@ -187,11 +182,8 @@ class MapImage extends Component
   onResponderRelease = (evt) => 
   {
     this.lastTouchDistance = 0.0;
-    this.imageTouchX = null;
-    this.imageTouchY = null;
     this.screenTouchX = null;
     this.screenTouchY = null;
-    console.log('Reset Coordinates');
     this.props.onPress();
   }
 
