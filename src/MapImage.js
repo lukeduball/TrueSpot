@@ -1,22 +1,20 @@
 import React, { Component } from 'react';
-import { Image, View, Dimensions } from 'react-native';
+import { Image, View, Dimensions, PanResponder } from 'react-native';
 
 export class MapImage extends Component
 {
-  static defaultProps =
-  {
-    onPress: () => null,
-    numberOfTouches: 2,
-  };
 
   constructor(props)
   {
     super(props);
-    this.lastTouchDistance = 0.0;
+
+    this.lastTouchDistance = null;
     this.screenTouchX = null;
     this.screenTouchY = null;
-    this.lastPanX = 0;
-    this.lastPanY = 0;
+    this.imageCoordX = null;
+    this.imageCoordY = null;
+    this.lastPanX = null;
+    this.lastPanY = null;
     this.screenWidth = Math.round(Dimensions.get('window').width);
     this.screenHeight = Math.round(Dimensions.get('window').height);
     this.NORMAL_IMAGE_WIDTH = 1473;
@@ -30,6 +28,121 @@ export class MapImage extends Component
                   yPos: y,
                   width: w, 
                   height: this.NORMAL_IMAGE_HEIGHT};
+
+    this._panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => true,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => true,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+
+      onPanResponderGrant: (evt, gestureState) =>
+      {
+
+      },
+      onPanResponderMove: (evt, gestureState) => 
+      {
+        if(gestureState.numberActiveTouches == 2)
+        {
+          this.processPinchZoom(evt, gestureState);
+        }
+        else if(gestureState.numberActiveTouches == 1)
+        {
+          this.processPanImage(evt, gestureState);
+        }
+      },
+      onPanResponderTerminationRequest: (evt, gestureState) => true,
+      onPanResponderRelease: (evt, gestureState) => 
+      {
+        this.screenTouchX = null;
+        this.screenTouchY = null;
+        this.imageCoordX = null;
+        this.imageCoordY = null;
+        this.lastTouchDistance = null;
+        this.lastPanX = null;
+        this.lastPanY = null;
+      },
+      onPanResponderTerminate: (evt, gestureState) =>
+      {
+
+      },
+      onShouldBlockNativeResponder: (evt, gestureState) =>
+      {
+        return true;
+      }
+    });
+  }
+
+  processPinchZoom(evt, gestureState)
+  {
+    var touchDiffX = evt.nativeEvent.touches[0].pageX - evt.nativeEvent.touches[1].pageX;
+    var touchDiffY = evt.nativeEvent.touches[0].pageY - evt.nativeEvent.touches[1].pageY;
+    var distance = Math.sqrt((touchDiffX * touchDiffX) + (touchDiffY * touchDiffY));
+
+    if(this.lastTouchDistance == null)
+    {
+      this.lastTouchDistance = distance;
+      return;
+    }
+
+    if(this.screenTouchX == null || this.screenTouchY == null || this.imageCoordX == null || this.imageCoordY == null)
+    {
+      this.screenTouchX = ((evt.nativeEvent.touches[0].locationX + this.state.xPos) + (evt.nativeEvent.touches[1].locationX + this.state.xPos)) / 2.0;
+      this.screenTouchY = ((evt.nativeEvent.touches[0].locationY + this.state.yPos) + (evt.nativeEvent.touches[1].locationY + this.state.yPos)) / 2.0;
+      //Converts the touch coordiantes into a image based coordinate
+      this.imageCoordX = this.getImageSpaceXLocation(this.state.width, this.screenTouchX);
+      this.imageCoordY = this.getImageSpaceYLocation(this.state.height, this.screenTouchY);
+    }
+
+    var zoom = distance / this.lastTouchDistance;
+    var newWidth = this.state.width * zoom;
+    var newHeight = this.state.height * zoom;
+    //Ensures the width of the image can not be less than the screen width while keeping the aspect ratio with the height
+    if(newWidth < this.screenWidth)
+    {
+      var ratio = newHeight / newWidth;
+      newWidth = this.screenWidth;
+      newHeight = ratio * newWidth;
+    }
+    //Ensures the width of the image can not be greater than the max width specified while keeping the aspect ratio with the height
+    else if(newWidth > this.maxWidth)
+    {
+      var ratio = newHeight / newWidth;
+      newWidth = this.maxWidth;
+      newHeight = ratio * newWidth;
+    }
+
+    //Gets the new position of the image to keep the image coordinate at the same touch location on the screen
+    var newXPos = this.getScaledXPosLocation(newWidth, this.imageCoordX, this.screenTouchX);
+    var newYPos = this.getScaledYPosLocation(newHeight, this.imageCoordY, this.screenTouchY);
+
+    //Ensure that when applying the new location that the image stays on the screen without leaving blank space
+    newXPos = this.clampImageXToScreen(newXPos);
+    newYPos = this.clampImageYToScreen(newYPos);
+      
+    this.lastTouchDistance = distance;
+    this.setState({width: newWidth, height: newHeight, xPos: newXPos, yPos: newYPos});
+  }
+
+  processPanImage(evt, gestureState)
+  {
+    if(this.lastPanX == null || this.lastPanY == null)
+    {
+      this.lastPanX = evt.nativeEvent.touches[0].locationX;
+      this.lastPanY = evt.nativeEvent.touches[0].locationY;
+      return;
+    }
+    var diffX = evt.nativeEvent.touches[0].locationX - this.lastPanX;
+    var diffY = evt.nativeEvent.touches[0].locationY - this.lastPanY;
+    var dampner = 0.5;
+    var newXPos = this.state.xPos + diffX * dampner;
+    var newYPos = this.state.yPos + diffY * dampner;
+    //Keeps map image from leaving blank space on the left and right of the screen
+    newXPos = this.clampImageXToScreen(newXPos);
+    newYPos = this.clampImageYToScreen(newYPos);
+
+    this.setState({xPos: newXPos,
+               yPos: newYPos,
+    });
   }
 
   getImageSpaceXLocation(wth, screenX)
@@ -88,112 +201,11 @@ export class MapImage extends Component
     return val;
   }
 
-  onStartShouldSetResponder = (evt) =>
-  {
-    if(evt.nativeEvent.touches.length >= 2)
-    {
-      //This code seems not to update the lastTouchEvent and should just be handled by onResponderMove
-      var touchDiffX = evt.nativeEvent.touches[0].locationX - evt.nativeEvent.touches[1].locationX;
-      var touchDiffY = evt.nativeEvent.touches[0].locationY - evt.nativeEvent.touches[1].locationY;
-      var distance = Math.sqrt(touchDiffX * touchDiffX + touchDiffY * touchDiffY);
-      this.lastTouchDistance = distance;
-      return true;
-    }
-    else if(evt.nativeEvent.touches.length == 1)
-    {
-      this.lastPanX = evt.nativeEvent.touches[0].locationX;
-      this.lastPanY = evt.nativeEvent.touches[0].locationY;
-      return true;
-    }
-
-    return false;
-  }
-
-  onResponderMove = (evt) =>
-  {
-    if(evt.nativeEvent.touches.length === 2)
-    {
-      var touchDiffX = evt.nativeEvent.touches[0].locationX - evt.nativeEvent.touches[1].locationX;
-      var touchDiffY = evt.nativeEvent.touches[0].locationY - evt.nativeEvent.touches[1].locationY;
-      var distance = Math.sqrt( (touchDiffX * touchDiffX) + (touchDiffY * touchDiffY) );
-
-      //If the lastTouchDistance has not been set yet for this touch, set it and return so the view is not affected
-      if(this.lastTouchDistance === 0)
-      {
-        this.lastTouchDistance = distance;
-        return;
-      }
-
-      if(this.screenTouchX == null && this.screenTouchY == null)
-      {
-        this.screenTouchX = ((evt.nativeEvent.touches[0].locationX + this.state.xPos) + (evt.nativeEvent.touches[1].locationX + this.state.xPos)) / 2.0;
-        this.screenTouchY = ((evt.nativeEvent.touches[0].locationY + this.state.yPos) + (evt.nativeEvent.touches[1].locationY + this.state.yPos)) / 2.0;
-      }
-
-      var zoom = distance / this.lastTouchDistance;
-      var newWidth = this.state.width * zoom;
-      var newHeight = this.state.height * zoom;
-      //Ensures the width of the image can not be less than the screen width while keeping the aspect ratio with the height
-      if(newWidth < this.screenWidth)
-      {
-        var ratio = newHeight / newWidth;
-        newWidth = this.screenWidth;
-        newHeight = ratio * newWidth;
-      }
-      //Ensures the width of the image can not be greater than the max width specified while keeping the aspect ratio with the height
-      else if(newWidth > this.maxWidth)
-      {
-        var ratio = newHeight / newWidth;
-        newWidth = this.maxWidth;
-        newHeight = ratio * newWidth;
-      }
-
-      //Converts the touch coordiantes into a image based coordinate
-      var imageCoordX = this.getImageSpaceXLocation(this.state.width, this.screenTouchX);
-      var imageCoordY = this.getImageSpaceYLocation(this.state.height, this.screenTouchY);
-      //Gets the new position of the image to keep the image coordinate at the same touch location on the screen
-      var newXPos = this.getScaledXPosLocation(newWidth, imageCoordX, this.screenTouchX);
-      var newYPos = this.getScaledYPosLocation(newHeight, imageCoordY, this.screenTouchY);
-      //Ensure that when applying the new location that the image stays on the screen without leaving blank space
-      newXPos = this.clampImageXToScreen(newXPos);
-      newYPos = this.clampImageYToScreen(newYPos);
-
-      this.lastTouchDistance = distance;
-      this.setState({width: newWidth, height: newHeight, xPos: newXPos, yPos: newYPos});
-    }
-    else if(evt.nativeEvent.touches.length === 1)
-    {
-      var diffX = evt.nativeEvent.touches[0].locationX - this.lastPanX;
-      var diffY = evt.nativeEvent.touches[0].locationY - this.lastPanY;
-      var dampner = 0.5;
-      var newXPos = this.state.xPos + diffX * dampner;
-      var newYPos = this.state.yPos + diffY * dampner;
-      //Keeps map image from leaving blank space on the left and right of the screen
-      newXPos = this.clampImageXToScreen(newXPos);
-      newYPos = this.clampImageYToScreen(newYPos);
-
-      this.setState({xPos: newXPos,
-                     yPos: newYPos,
-      });
-    }
-  }
-
-  onResponderRelease = (evt) => 
-  {
-    this.lastTouchDistance = 0.0;
-    this.screenTouchX = null;
-    this.screenTouchY = null;
-    this.props.onPress();
-  }
-
   render()
   {
     return (
       <View
-        onStartShouldSetResponder={this.onStartShouldSetResponder}
-        onResponderMove={this.onResponderMove}
-        onResponderRelease={this.onResponderRelease}>
-          {this.props.children}
+        {...this._panResponder.panHandlers}>
         <Image
           style = {{
           position : 'absolute',
