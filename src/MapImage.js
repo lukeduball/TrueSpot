@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Image, View, Dimensions, PanResponder } from 'react-native';
+import {LocationOverlay} from './LocationOverlay.js'
 
 export class MapImage extends Component
 {
@@ -216,6 +217,16 @@ export class MapImage extends Component
         }}
         source = {require('../assets/floorplan.jpg')}
         />
+        <LocationOverlay 
+          parentXPos = {this.state.xPos}
+          parentYPos = {this.state.yPos}
+          parentHeight = {this.state.height}
+          parentWidth = {this.state.width}
+          defaultParentWidth = {this.NORMAL_IMAGE_WIDTH}
+          defaultParentHeight = {this.NORMAL_IMAGE_HEIGHT}
+          imageLocationX = {100}
+          imageLocationY = {100}
+          locationName = 'Placeholder'/>
       </View>
     )
   }

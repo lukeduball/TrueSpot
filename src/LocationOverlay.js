@@ -1,46 +1,63 @@
 import React, {Component} from 'react';
-import {Image, View} from 'react-native';
-import { isRequired } from 'react-native/Libraries/DeprecatedPropTypes/DeprecatedColorPropType';
+import {Image, View, Text} from 'react-native';
 
 export class LocationOverlay extends Component
 {
-    static def
+    //Props which can be specified at creation time to get overlay in the correct place
+    static defaultProps = {
+        parentXPos: 0,
+        parentYPos: 0,
+        parentHeight: 0,
+        parentWidth: 0,
+        defaultParentWidth: 0,
+        defaultParentHeight: 0,
+        imageLocationX: 0,
+        imageLocationY: 0,
+        locationName: 'Missing Name'
+    }
 
     constructor(props)
     {
         super(props);
 
-        //Create the default props which can be passed in when the component is created
-        this.props = {
-            imageLocationX : 0,
-            imageLocationY : 0,
-            locationName: 'Missing Name'
-        };
+        this.NORMAL_HEIGHT = 50;
+        this.NORMAL_WIDTH = 33;
+    }
 
-        //Have an xPosition and yPosition for the state because these locations can change based on image scale
-        this.state = {
-            xPos: 0,
-            yPos: 0,
-            width: 50,
-            height: 50
-        };
+    getScaledCoordinate(parentPos, dimension, defaultDimension, imageCoordinate)
+    {
+        var loc = (imageCoordinate * dimension) / defaultDimension;
+        return parentPos + loc;
+    }
+
+    getScaledSizeDimension(parentDimension, defaultParentDimension, defaultDimension)
+    {
+        var dimension = (defaultDimension * parentDimension) / defaultParentDimension;
+        return dimension;
     }
 
     render()
     {
         return(
-            <Image 
+            <View
             style = {{
                 position : 'absolute',
-                top: this.state.yPos,
-                left: this.state.xPos,
-                width: this.state.width,
-                height: this.state.height,
-              }}
-            source = {require('../assets/locationMarker.png')}/>
-            <Text>
-                {this.props.locationName}
-            </Text>
+                top: this.getScaledCoordinate(this.props.parentYPos, this.props.parentHeight, this.props.defaultParentHeight, this.props.imageLocationY),
+                left: this.getScaledCoordinate(this.props.parentXPos, this.props.parentWidth, this.props.defaultParentWidth, this.props.imageLocationX),
+            }}>
+                <Image 
+                style = {{
+                    width: this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH),
+                    height: this.getScaledSizeDimension(this.props.parentHeight, this.props.defaultParentHeight, this.NORMAL_HEIGHT),
+                }}
+                source = {require('../assets/locationMarker.png')}/>
+                <Text
+                style = {{
+                    left: -this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) / 2
+                }}>
+                    {this.props.locationName}
+                </Text>
+            </View>
         )
     }
 }

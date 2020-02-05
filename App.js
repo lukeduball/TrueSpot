@@ -7,8 +7,9 @@ export default class App extends Component
   render()
   {
     return (
-      <MapImage onPress={() => console.log('Double Tap')} numberOfTouches={2}>
-      </MapImage>
+      <View>
+        <MapImage/>
+      </View>
     );
   }
 }
