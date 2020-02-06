@@ -43,7 +43,10 @@ export class LocationOverlay extends Component
             style = {{
                 position : 'absolute',
                 top: this.getScaledCoordinate(this.props.parentYPos, this.props.parentHeight, this.props.defaultParentHeight, this.props.imageLocationY),
-                left: this.getScaledCoordinate(this.props.parentXPos, this.props.parentWidth, this.props.defaultParentWidth, this.props.imageLocationX),
+                left: this.getScaledCoordinate(this.props.parentXPos, this.props.parentWidth, this.props.defaultParentWidth, this.props.imageLocationX) - (this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4) / 2,
+                width: this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4,
+                alignItems: 'center',
+                justifyContent: 'center',
             }}>
                 <Image 
                 style = {{
@@ -51,9 +54,10 @@ export class LocationOverlay extends Component
                     height: this.getScaledSizeDimension(this.props.parentHeight, this.props.defaultParentHeight, this.NORMAL_HEIGHT),
                 }}
                 source = {require('../assets/locationMarker.png')}/>
-                <Text
+                <Text adjustsFontSizeToFit minimumFontScale={0.1} numberOfLines={1}
                 style = {{
-                    left: -this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) / 2
+                    textAlign : 'center',
+                    textAlignVertical: 'center',
                 }}>
                     {this.props.locationName}
                 </Text>

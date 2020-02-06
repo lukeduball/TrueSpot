@@ -224,9 +224,9 @@ export class MapImage extends Component
           parentWidth = {this.state.width}
           defaultParentWidth = {this.NORMAL_IMAGE_WIDTH}
           defaultParentHeight = {this.NORMAL_IMAGE_HEIGHT}
-          imageLocationX = {100}
-          imageLocationY = {100}
-          locationName = 'Placeholder'/>
+          imageLocationX = {630}
+          imageLocationY = {420}
+          locationName = 'Bedroom Door'/>
       </View>
     )
   }
