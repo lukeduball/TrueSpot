@@ -218,14 +218,12 @@ export class MapImage extends Component
         source = {require('../assets/floorplan.jpg')}
         />
         <LocationOverlay 
-          parentXPos = {this.state.position.x}
-          parentYPos = {this.state.position.y}
+          parentPos = {this.state.position}
           parentHeight = {this.state.height}
           parentWidth = {this.state.width}
           defaultParentWidth = {this.NORMAL_IMAGE_WIDTH}
           defaultParentHeight = {this.NORMAL_IMAGE_HEIGHT}
-          imageLocationX = {630}
-          imageLocationY = {420}
+          imageLocation = {new Point(630, 420)}
           locationName = 'Bedroom Door'/>
       </View>
     )

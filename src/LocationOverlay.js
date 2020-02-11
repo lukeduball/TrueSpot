@@ -1,18 +1,17 @@
 import React, {Component} from 'react';
 import {Image, View, Text} from 'react-native';
+import {Point} from './Utility/Point';
 
 export class LocationOverlay extends Component
 {
     //Props which can be specified at creation time to get overlay in the correct place
     static defaultProps = {
-        parentXPos: 0,
-        parentYPos: 0,
+        parentPos : null,
         parentHeight: 0,
         parentWidth: 0,
         defaultParentWidth: 0,
         defaultParentHeight: 0,
-        imageLocationX: 0,
-        imageLocationY: 0,
+        imageLocation: null,
         locationName: 'Missing Name'
     }
 
@@ -42,8 +41,8 @@ export class LocationOverlay extends Component
             <View
             style = {{
                 position : 'absolute',
-                left: this.getScaledCoordinate(this.props.parentXPos, this.props.parentWidth, this.props.defaultParentWidth, this.props.imageLocationX) - (this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4) / 2,
-                top: this.getScaledCoordinate(this.props.parentYPos, this.props.parentHeight, this.props.defaultParentHeight, this.props.imageLocationY),
+                left: this.getScaledCoordinate(this.props.parentPos.x, this.props.parentWidth, this.props.defaultParentWidth, this.props.imageLocation.x) - (this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4) / 2,
+                top: this.getScaledCoordinate(this.props.parentPos.y, this.props.parentHeight, this.props.defaultParentHeight, this.props.imageLocation.y),
                 width: this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4,
                 alignItems: 'center',
                 justifyContent: 'center',
