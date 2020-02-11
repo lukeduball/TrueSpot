@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Image, View, Text} from 'react-native';
+import {Image, View, Text, Dimensions} from 'react-native';
 import {Point} from './Utility/Point';
 
 export class LocationOverlay extends Component
@@ -12,7 +12,7 @@ export class LocationOverlay extends Component
         defaultParentWidth: 0,
         defaultParentHeight: 0,
         imageLocation: null,
-        locationName: 'Missing Name'
+        locationName: 'Missing Name',
     }
 
     constructor(props)
@@ -21,6 +21,8 @@ export class LocationOverlay extends Component
 
         this.NORMAL_HEIGHT = 50;
         this.NORMAL_WIDTH = 33;
+        //With a normal size, 15 is the desired font size. This value is used to adjust the font for different widths
+        this.FONT_SIZE_ADJUSTER = this.props.defaultParentWidth / 15;
     }
 
     getScaledCoordinate(parentPos, dimension, defaultDimension, imageCoordinate)
@@ -53,10 +55,11 @@ export class LocationOverlay extends Component
                     height: this.getScaledSizeDimension(this.props.parentHeight, this.props.defaultParentHeight, this.NORMAL_HEIGHT),
                 }}
                 source = {require('../assets/locationMarker.png')}/>
-                <Text adjustsFontSizeToFit minimumFontScale={0.1} numberOfLines={1}
+                <Text numberOfLines={1}
                 style = {{
                     textAlign : 'center',
                     textAlignVertical: 'center',
+                    fontSize: this.props.parentWidth / this.FONT_SIZE_ADJUSTER,
                 }}>
                     {this.props.locationName}
                 </Text>
