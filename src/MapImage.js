@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Image, View, Dimensions, PanResponder } from 'react-native';
 import {LocationOverlay} from './LocationOverlay.js'
+import {Point} from './Utility/Point'
 
 export class MapImage extends Component
 {
@@ -9,6 +10,7 @@ export class MapImage extends Component
   {
     super(props);
 
+    this.lastNumberOfTouches = null;
     this.lastTouchDistance = null;
     this.screenTouchX = null;
     this.screenTouchY = null;
@@ -42,6 +44,13 @@ export class MapImage extends Component
       },
       onPanResponderMove: (evt, gestureState) => 
       {
+        //Checks if the number of touches have changed since the last frame so variables states don't cause unexspected behavior 
+        if(this.lastNumberOfTouches != gestureState.numberActiveTouches)
+        {
+          this.resetPanAndZoomVars();
+        }
+
+        this.lastNumberOfTouches = gestureState.numberActiveTouches;
         if(gestureState.numberActiveTouches == 2)
         {
           this.processPinchZoom(evt, gestureState);
@@ -54,13 +63,7 @@ export class MapImage extends Component
       onPanResponderTerminationRequest: (evt, gestureState) => true,
       onPanResponderRelease: (evt, gestureState) => 
       {
-        this.screenTouchX = null;
-        this.screenTouchY = null;
-        this.imageCoordX = null;
-        this.imageCoordY = null;
-        this.lastTouchDistance = null;
-        this.lastPanX = null;
-        this.lastPanY = null;
+        this.resetPanAndZoomVars();
       },
       onPanResponderTerminate: (evt, gestureState) =>
       {
@@ -71,6 +74,17 @@ export class MapImage extends Component
         return true;
       }
     });
+  }
+
+  resetPanAndZoomVars()
+  {
+    this.screenTouchX = null;
+    this.screenTouchY = null;
+    this.imageCoordX = null;
+    this.imageCoordY = null;
+    this.lastTouchDistance = null;
+    this.lastPanX = null;
+    this.lastPanY = null;
   }
 
   processPinchZoom(evt, gestureState)
@@ -87,11 +101,12 @@ export class MapImage extends Component
 
     if(this.screenTouchX == null || this.screenTouchY == null || this.imageCoordX == null || this.imageCoordY == null)
     {
-      this.screenTouchX = ((evt.nativeEvent.touches[0].locationX + this.state.xPos) + (evt.nativeEvent.touches[1].locationX + this.state.xPos)) / 2.0;
-      this.screenTouchY = ((evt.nativeEvent.touches[0].locationY + this.state.yPos) + (evt.nativeEvent.touches[1].locationY + this.state.yPos)) / 2.0;
+      this.screenTouchX = (evt.nativeEvent.touches[0].pageX + evt.nativeEvent.touches[1].pageX) / 2.0;
+      this.screenTouchY = (evt.nativeEvent.touches[0].pageY + evt.nativeEvent.touches[1].pageY) / 2.0;
       //Converts the touch coordiantes into a image based coordinate
       this.imageCoordX = this.getImageSpaceXLocation(this.state.width, this.screenTouchX);
       this.imageCoordY = this.getImageSpaceYLocation(this.state.height, this.screenTouchY);
+      return;
     }
 
     var zoom = distance / this.lastTouchDistance;
