@@ -12,12 +12,9 @@ export class MapImage extends Component
 
     this.lastNumberOfTouches = null;
     this.lastTouchDistance = null;
-    this.screenTouchX = null;
-    this.screenTouchY = null;
-    this.imageCoordX = null;
-    this.imageCoordY = null;
-    this.lastPanX = null;
-    this.lastPanY = null;
+    this.screenTouch = null;
+    this.imageCoords = null;
+    this.lastPan = null;
     this.screenWidth = Math.round(Dimensions.get('window').width);
     this.screenHeight = Math.round(Dimensions.get('window').height);
     this.NORMAL_IMAGE_WIDTH = 1473;
@@ -27,8 +24,7 @@ export class MapImage extends Component
     var x = (this.screenWidth - w) / 2; 
     var y = 0;
 
-    this.state = {xPos: x,
-                  yPos: y,
+    this.state = {position: new Point(x, y),
                   width: w, 
                   height: this.NORMAL_IMAGE_HEIGHT};
 
@@ -78,20 +74,18 @@ export class MapImage extends Component
 
   resetPanAndZoomVars()
   {
-    this.screenTouchX = null;
-    this.screenTouchY = null;
-    this.imageCoordX = null;
-    this.imageCoordY = null;
+    this.screenTouch = null;
+    this.imageCoords = null;
     this.lastTouchDistance = null;
-    this.lastPanX = null;
-    this.lastPanY = null;
+    this.lastPan = null;
   }
 
   processPinchZoom(evt, gestureState)
   {
-    var touchDiffX = evt.nativeEvent.touches[0].pageX - evt.nativeEvent.touches[1].pageX;
-    var touchDiffY = evt.nativeEvent.touches[0].pageY - evt.nativeEvent.touches[1].pageY;
-    var distance = Math.sqrt((touchDiffX * touchDiffX) + (touchDiffY * touchDiffY));
+    var screenTouch1 = new Point(evt.nativeEvent.touches[0].pageX, evt.nativeEvent.touches[0].pageY);
+    var screenTouch2 = new Point(evt.nativeEvent.touches[1].pageX, evt.nativeEvent.touches[1].pageY);
+    var touchDiff = screenTouch1.subtract(screenTouch2);
+    var distance = Math.sqrt((touchDiff.x * touchDiff.x) + (touchDiff.y * touchDiff.y));
 
     if(this.lastTouchDistance == null)
     {
@@ -99,13 +93,12 @@ export class MapImage extends Component
       return;
     }
 
-    if(this.screenTouchX == null || this.screenTouchY == null || this.imageCoordX == null || this.imageCoordY == null)
+    if(this.screenTouch == null || this.imageCoords == null)
     {
-      this.screenTouchX = (evt.nativeEvent.touches[0].pageX + evt.nativeEvent.touches[1].pageX) / 2.0;
-      this.screenTouchY = (evt.nativeEvent.touches[0].pageY + evt.nativeEvent.touches[1].pageY) / 2.0;
+      //Calculates the point on the screen that is midway between both touches
+      this.screenTouch = screenTouch1.add(screenTouch2).multiply(0.5);
       //Converts the touch coordiantes into a image based coordinate
-      this.imageCoordX = this.getImageSpaceXLocation(this.state.width, this.screenTouchX);
-      this.imageCoordY = this.getImageSpaceYLocation(this.state.height, this.screenTouchY);
+      this.imageCoords = this.getImageSpaceLocation(this.state.width, this.state.height, this.screenTouch);
       return;
     }
 
@@ -128,65 +121,52 @@ export class MapImage extends Component
     }
 
     //Gets the new position of the image to keep the image coordinate at the same touch location on the screen
-    var newXPos = this.getScaledXPosLocation(newWidth, this.imageCoordX, this.screenTouchX);
-    var newYPos = this.getScaledYPosLocation(newHeight, this.imageCoordY, this.screenTouchY);
+    var newPos = this.getScaledLocation(newWidth, newHeight, this.imageCoords, this.screenTouch);
 
     //Ensure that when applying the new location that the image stays on the screen without leaving blank space
-    newXPos = this.clampImageXToScreen(newXPos);
-    newYPos = this.clampImageYToScreen(newYPos);
+    newPos = this.clampImageToScreen(newPos);
       
     this.lastTouchDistance = distance;
-    this.setState({width: newWidth, height: newHeight, xPos: newXPos, yPos: newYPos});
+    this.setState({width: newWidth, height: newHeight, position: newPos});
   }
 
   processPanImage(evt, gestureState)
   {
-    if(this.lastPanX == null || this.lastPanY == null)
+    if(this.lastPan == null)
     {
-      this.lastPanX = evt.nativeEvent.touches[0].locationX;
-      this.lastPanY = evt.nativeEvent.touches[0].locationY;
+      var lastPanX = evt.nativeEvent.touches[0].locationX;
+      var lastPanY = evt.nativeEvent.touches[0].locationY;
+      this.lastPan = new Point(lastPanX, lastPanY);
       return;
     }
-    var diffX = evt.nativeEvent.touches[0].locationX - this.lastPanX;
-    var diffY = evt.nativeEvent.touches[0].locationY - this.lastPanY;
+    var touchPoint = new Point(evt.nativeEvent.touches[0].locationX, evt.nativeEvent.touches[0].locationY);
+    var diff = touchPoint.subtract(this.lastPan);
     var dampner = 0.5;
-    var newXPos = this.state.xPos + diffX * dampner;
-    var newYPos = this.state.yPos + diffY * dampner;
+    diff = diff.multiply(dampner);
+    var newPos = this.state.position.add(diff);
     //Keeps map image from leaving blank space on the left and right of the screen
-    newXPos = this.clampImageXToScreen(newXPos);
-    newYPos = this.clampImageYToScreen(newYPos);
+    newPos = this.clampImageToScreen(newPos);
 
-    this.setState({xPos: newXPos,
-               yPos: newYPos,
-    });
+    this.setState({position : newPos});
   }
 
-  getImageSpaceXLocation(wth, screenX)
+  //Converts the screen position to a local image location
+  getImageSpaceLocation(wth, hght, screenPoint)
   {
-    var coordX = ((screenX - this.state.xPos) * this.NORMAL_IMAGE_WIDTH) / wth;
-    return coordX;
+    var coords = screenPoint.subtract(this.state.position);
+    coords.x *= this.NORMAL_IMAGE_WIDTH / wth;
+    coords.y *= this.NORMAL_IMAGE_HEIGHT / hght;
+    return coords;
   }
 
-  getImageSpaceYLocation(hght, screenY)
+  //Converts the image location to the proper x and y position to keep that point in the same position on the screen with a given width and height
+  getScaledLocation(wth, hght, imagePoint, screenPoint)
   {
-    var coordY = ((screenY - this.state.yPos) * this.NORMAL_IMAGE_HEIGHT) / hght;
-    return coordY;
-  }
-
-  //This function takes an X Location that is converted to image coordinates
-  getScaledXPosLocation(wth, xLoc, screenX)
-  {
-    var scale = wth / this.NORMAL_IMAGE_WIDTH;
-    var newXPos = screenX - xLoc * scale;
-    return newXPos;
-  }
-
-  //This function takes a Y location that is converted to image coordinates
-  getScaledYPosLocation(hght, yLoc, screenY)
-  {
-    var scale = hght / this.NORMAL_IMAGE_HEIGHT;
-    var newYPos = screenY - yLoc * scale;
-    return newYPos;
+    var scaleX = wth / this.NORMAL_IMAGE_WIDTH;
+    var newXPos = screenPoint.x - imagePoint.x * scaleX;
+    var scaleY = hght / this.NORMAL_IMAGE_HEIGHT
+    var newYPos = screenPoint.y - imagePoint.y * scaleY;
+    return new Point(newXPos, newYPos);
   }
 
   clampImageXToScreen(newXPos)
@@ -217,6 +197,11 @@ export class MapImage extends Component
     return val;
   }
 
+  clampImageToScreen(newPos)
+  {
+    return new Point(this.clampImageXToScreen(newPos.x), this.clampImageYToScreen(newPos.y));
+  }
+
   render()
   {
     return (
@@ -225,16 +210,16 @@ export class MapImage extends Component
         <Image
           style = {{
           position : 'absolute',
-          top: this.state.yPos,
-          left: this.state.xPos,
+          left: this.state.position.x,
+          top: this.state.position.y,
           width: this.state.width,
           height: this.state.height,
         }}
         source = {require('../assets/floorplan.jpg')}
         />
         <LocationOverlay 
-          parentXPos = {this.state.xPos}
-          parentYPos = {this.state.yPos}
+          parentXPos = {this.state.position.x}
+          parentYPos = {this.state.position.y}
           parentHeight = {this.state.height}
           parentWidth = {this.state.width}
           defaultParentWidth = {this.NORMAL_IMAGE_WIDTH}

@@ -42,8 +42,8 @@ export class LocationOverlay extends Component
             <View
             style = {{
                 position : 'absolute',
-                top: this.getScaledCoordinate(this.props.parentYPos, this.props.parentHeight, this.props.defaultParentHeight, this.props.imageLocationY),
                 left: this.getScaledCoordinate(this.props.parentXPos, this.props.parentWidth, this.props.defaultParentWidth, this.props.imageLocationX) - (this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4) / 2,
+                top: this.getScaledCoordinate(this.props.parentYPos, this.props.parentHeight, this.props.defaultParentHeight, this.props.imageLocationY),
                 width: this.getScaledSizeDimension(this.props.parentWidth, this.props.defaultParentWidth, this.NORMAL_WIDTH) * 4,
                 alignItems: 'center',
                 justifyContent: 'center',
