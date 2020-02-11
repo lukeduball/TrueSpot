@@ -202,8 +202,24 @@ export class MapImage extends Component
     return new Point(this.clampImageXToScreen(newPos.x), this.clampImageYToScreen(newPos.y));
   }
 
+  generateLocationComponent(imageLocation, name, key)
+  {
+    return <LocationOverlay 
+            key = {key}
+            parentPos = {this.state.position}
+            parentHeight = {this.state.height}
+            parentWidth = {this.state.width}
+            defaultParentWidth = {this.NORMAL_IMAGE_WIDTH}
+            defaultParentHeight = {this.NORMAL_IMAGE_HEIGHT}
+            imageLocation = {imageLocation}
+            locationName = {name}/>
+  }
+
   render()
   {
+    var LocationsArray = new Array();
+    LocationsArray[0] = this.generateLocationComponent(new Point(630, 420), 'Bedroom Door', 0);
+    LocationsArray[1] = this.generateLocationComponent(new Point(1000, 800), 'Location 2', 1);
     return (
       <View
         {...this._panResponder.panHandlers}>
@@ -217,14 +233,7 @@ export class MapImage extends Component
         }}
         source = {require('../assets/floorplan.jpg')}
         />
-        <LocationOverlay 
-          parentPos = {this.state.position}
-          parentHeight = {this.state.height}
-          parentWidth = {this.state.width}
-          defaultParentWidth = {this.NORMAL_IMAGE_WIDTH}
-          defaultParentHeight = {this.NORMAL_IMAGE_HEIGHT}
-          imageLocation = {new Point(630, 420)}
-          locationName = 'Bedroom Door'/>
+        {LocationsArray}
       </View>
     )
   }
