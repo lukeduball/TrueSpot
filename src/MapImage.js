@@ -124,7 +124,7 @@ export class MapImage extends Component
     var newPos = this.getScaledLocation(newWidth, newHeight, this.imageCoords, this.screenTouch);
 
     //Ensure that when applying the new location that the image stays on the screen without leaving blank space
-    newPos = this.clampImageToScreen(newPos);
+    newPos = this.clampImageToScreen(newPos, newWidth, newHeight);
       
     this.lastTouchDistance = distance;
     this.setState({width: newWidth, height: newHeight, position: newPos});
@@ -145,7 +145,7 @@ export class MapImage extends Component
     diff = diff.multiply(dampner);
     var newPos = this.state.position.add(diff);
     //Keeps map image from leaving blank space on the left and right of the screen
-    newPos = this.clampImageToScreen(newPos);
+    newPos = this.clampImageToScreen(newPos, this.state.width, this.state.height);
 
     this.setState({position : newPos});
   }
@@ -169,13 +169,13 @@ export class MapImage extends Component
     return new Point(newXPos, newYPos);
   }
 
-  clampImageXToScreen(newXPos)
+  clampImageXToScreen(newXPos, width)
   {
     var val = newXPos;
     //Condition so there is no blank space on the right of the screen when the image is moved
-    if(newXPos + this.state.width < this.screenWidth)
+    if(newXPos + width < this.screenWidth)
     {
-      val = this.screenWidth - this.state.width;
+      val = this.screenWidth - width;
     }
     //Condition to check if the image leaves blank space on the left of the screen
     if(newXPos > 0)
@@ -186,7 +186,7 @@ export class MapImage extends Component
     return val;
   }
 
-  clampImageYToScreen(newYPos)
+  clampImageYToScreen(newYPos, height)
   {
     var val = newYPos;
     if(newYPos > 0)
@@ -197,9 +197,9 @@ export class MapImage extends Component
     return val;
   }
 
-  clampImageToScreen(newPos)
+  clampImageToScreen(newPos, width, height)
   {
-    return new Point(this.clampImageXToScreen(newPos.x), this.clampImageYToScreen(newPos.y));
+    return new Point(this.clampImageXToScreen(newPos.x, width), this.clampImageYToScreen(newPos.y, height));
   }
 
   generateLocationComponent(imageLocation, name, key)
