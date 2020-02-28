@@ -4,6 +4,7 @@ import { MapImage } from './src/MapImage.js';
 import { BleManager } from 'react-native-ble-plx'
 import { Buffer } from 'buffer'
 import { RotationGestureHandler } from 'react-native-gesture-handler';
+import { Point } from './src/Utility/Point.js';
 
 export default class App extends Component
 {
@@ -11,6 +12,9 @@ export default class App extends Component
   {
     super();
     this.bluetoothManager = new BleManager();
+    this.state = {
+      locationsArray: new Array()
+    };
   }
 
   componentDidMount()
@@ -75,9 +79,18 @@ export default class App extends Component
   {
     device.readCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff3').then(function(characteristic)
     {
+      var locationArray = new Array();
       var value = Buffer.from(characteristic.value, "base64");
-      console.log("Dynamic Long Read Value: "+characteristic.value);
-    });
+      for(var i = 0; i < value.length / 8; i++)
+      {
+        var offset = i*8;
+        var coordinateX = value.slice(offset, offset+4);
+        var coordinateY = value.slice(offset+4, offset+8);
+        console.log(coordinateX.readUInt32LE() + ":" + coordinateY.readUInt32LE());
+        locationArray[i] = new Point(coordinateX.readUInt32LE(), coordinateY.readUInt32LE());
+      }
+      this.setState({locationsArray: locationArray});
+    }.bind(this));
   }
 
   scanAndConnect()
@@ -109,11 +122,9 @@ export default class App extends Component
                 var serviceUUID = 'ffffffff-ffff-ffff-ffff-fffffffffff0';
                 this.readDynamicReadValue(device, serviceUUID);
                 this.readLongDynamicValue(device, serviceUUID);
-                //var dynamicLongCharacteristic = device.readCharacteristicForService(serviceUUID, 'ffffffffffffffffffffffffffffff3');
-                //console.log("Dynamic Long Read Value: " + dynamicLongCharacteristic.value);
 
                 //Setup notify characteristic by calling the modifyNotifyValues function with the error and characteristic data passed
-                device.monitorCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff5', (error, characteristic) => this.modifyNotifyValues(error, characteristic));
+                //device.monitorCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff5', (error, characteristic) => this.modifyNotifyValues(error, characteristic));
           //Required to bind the 'this' otherwise it will not be in scope and cause an undefined error when calling a function
           }.bind(this))
           .catch((error) =>
@@ -129,7 +140,7 @@ export default class App extends Component
   {
     return (
       <View>
-        <MapImage/>
+        <MapImage locationsArray={this.state.locationsArray}/>
       </View>
     );
   }

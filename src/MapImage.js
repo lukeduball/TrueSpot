@@ -5,6 +5,10 @@ import {Point} from './Utility/Point'
 
 export class MapImage extends Component
 {
+  static defaultProps = {
+    base64ImageData : null,
+    locationsArray: new Array(),
+  };
 
   constructor(props)
   {
@@ -218,8 +222,12 @@ export class MapImage extends Component
   render()
   {
     var LocationsArray = new Array();
-    LocationsArray[0] = this.generateLocationComponent(new Point(630, 420), 'Bedroom Door', 0);
-    LocationsArray[1] = this.generateLocationComponent(new Point(1000, 800), 'Location 2', 1);
+    for(var i = 0; i < this.props.locationsArray.length; i++)
+    {
+      LocationsArray[i] = this.generateLocationComponent(this.props.locationsArray[i], 'Location '+i, i);
+    }
+    // LocationsArray[0] = this.generateLocationComponent(new Point(630, 420), 'Bedroom Door', 0);
+    // LocationsArray[1] = this.generateLocationComponent(new Point(1000, 800), 'Location 2', 1);
     return (
       <View
         {...this._panResponder.panHandlers}>
