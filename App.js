@@ -1,56 +1,40 @@
 import React, { Component } from 'react';
 import { StyleSheet, View} from 'react-native';
 import { MapImage } from './src/MapImage.js';
-import { BleManager } from 'react-native-ble-plx'
 import { Buffer } from 'buffer'
 import { RotationGestureHandler } from 'react-native-gesture-handler';
-import { Point } from './src/Utility/Point.js';
+import { BleHandler } from './src/Utility/BleHandler.js'
 
 export default class App extends Component
 {
   constructor()
   {
     super();
-    this.bluetoothManager = new BleManager();
+    this.bleHandler = new BleHandler();
     this.state = {
-      locationsArray: new Array()
+      locationsArray: new Array(),
+      descriptionsArray: new Array()
     };
   }
 
   componentDidMount()
   {
-    const subscription = this.bluetoothManager.onStateChange((state) => 
-    {
-      if(state === 'PoweredOn')
-      {
-        this.scanAndConnect();
-        subscription.remove();
-      }
-    }, true);
+    //Start scanning for devices and register onBeaconDeviceConnected as the callback once connected to a device
+    this.bleHandler.startScanning(this.onBeaconDeviceConnected);
   }
 
   componentWillUnmount()
   {
-    this.bluetoothManager.destroy();
+    this.bleHandler.cleanUp();
   }
 
-  async connectDeviceAndServices(device)
+  //this function is called once connected to a peripheral beacon
+  async onBeaconDeviceConnected()
   {
-      const connectedDevice = await device.connect();
-      const services = await connectedDevice.discoverAllServicesAndCharacteristics();
-      var serviceUUID = 'ffffffff-ffff-ffff-ffff-fffffffffff0';
-      //Setup notify characteristic
-      services.monitorCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff5', (error, characteristic) =>
-      {
-        if(error)
-        {
-          this.error(error.message);
-          return;
-        }
-        var value = Buffer.from(characteristic.value, "base64");
-        var number = value.readInt32LE();
-        console.log("Notify Update: "+number);
-      });
+    //Gets the location data as an array with point data first and the string descriptions second
+    let locationsData = await this.bleHandler.readLocationsArray();
+    this.setState({locationsArray: locationsData[0], descriptionsArray: locationsData[1]});
+    console.log("Callback function called");
   }
 
   modifyNotifyValues(error, characteristic)
@@ -63,34 +47,6 @@ export default class App extends Component
     var value = Buffer.from(characteristic.value, "base64");
     var number = value.readInt32LE();
     console.log("Notify Update: "+number);
-  }
-
-  readDynamicReadValue(device, serviceUUID)
-  {
-    device.readCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff2').then(function(characteristic)
-    {
-      var value = Buffer.from(characteristic.value, "base64");
-      var string = value.toString('ascii');
-      console.log("Dynamic Read Value: "+string);
-    });
-  }
-
-  readLongDynamicValue(device, serviceUUID)
-  {
-    device.readCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff3').then(function(characteristic)
-    {
-      var locationArray = new Array();
-      var value = Buffer.from(characteristic.value, "base64");
-      for(var i = 0; i < value.length / 8; i++)
-      {
-        var offset = i*8;
-        var coordinateX = value.slice(offset, offset+4);
-        var coordinateY = value.slice(offset+4, offset+8);
-        console.log(coordinateX.readUInt32LE() + ":" + coordinateY.readUInt32LE());
-        locationArray[i] = new Point(coordinateX.readUInt32LE(), coordinateY.readUInt32LE());
-      }
-      this.setState({locationsArray: locationArray});
-    }.bind(this));
   }
 
   scanAndConnect()
@@ -124,7 +80,7 @@ export default class App extends Component
                 this.readLongDynamicValue(device, serviceUUID);
 
                 //Setup notify characteristic by calling the modifyNotifyValues function with the error and characteristic data passed
-                //device.monitorCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff5', (error, characteristic) => this.modifyNotifyValues(error, characteristic));
+                device.monitorCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff5', (error, characteristic) => this.modifyNotifyValues(error, characteristic));
           //Required to bind the 'this' otherwise it will not be in scope and cause an undefined error when calling a function
           }.bind(this))
           .catch((error) =>
@@ -140,7 +96,7 @@ export default class App extends Component
   {
     return (
       <View>
-        <MapImage locationsArray={this.state.locationsArray}/>
+        <MapImage locationsArray={this.state.locationsArray} descriptionsArray={this.state.descriptionsArray} />
       </View>
     );
   }

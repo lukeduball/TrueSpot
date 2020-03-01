@@ -4,7 +4,7 @@ import {Point} from './Utility/Point';
 
 export class LocationOverlay extends Component
 {
-    //Props which can be specified at creation time to get overlay in the correct place
+    //Data which is passed from the parent component
     static defaultProps = {
         parentPos : null,
         parentHeight: 0,
@@ -19,18 +19,21 @@ export class LocationOverlay extends Component
     {
         super(props);
 
+        //Defines the normal width and height of the image
         this.NORMAL_HEIGHT = 50;
         this.NORMAL_WIDTH = 33;
         //With a normal size, 15 is the desired font size. This value is used to adjust the font for different widths
         this.FONT_SIZE_ADJUSTER = this.props.defaultParentWidth / 15;
     }
 
+    //Returns the scaled coordinate by converting from local image space to screen space
     getScaledCoordinate(parentPos, dimension, defaultDimension, imageCoordinate)
     {
         var loc = (imageCoordinate * dimension) / defaultDimension;
         return parentPos + loc;
     }
 
+    //Returns the scaled dimension size(width/height) for the current parent dimensions
     getScaledSizeDimension(parentDimension, defaultParentDimension, defaultDimension)
     {
         var dimension = (defaultDimension * parentDimension) / defaultParentDimension;
