@@ -1,5 +1,6 @@
 import { BleManager } from 'react-native-ble-plx'
 import { Point } from './Point.js'
+import { Buffer } from 'buffer'
 
 export class BleHandler
 {
@@ -41,7 +42,7 @@ export class BleHandler
             if(device.name === 'Raspberry PI Beacon')
             {
                 //Stop scanning if we only want to connect to one device
-                device.stopDeviceScan();
+                this.bluetoothManager.stopDeviceScan();
 
                 //Promise to connect to the device so we must wait to the promise is fullfilled using the .then
                 device.connect().then(function(device)
@@ -70,7 +71,7 @@ export class BleHandler
     {
         var dataCharacteristic = await this.device.readCharacteristicForService(serviceUUID, characteristicUUID);
         //Keep a buffer that will eventually contain the full data value
-        var fullData = Buffer();
+        var fullData;
         //If the data size is equal to 512 bytes, there is more data to recieve
         while(dataCharacteristic.value.length === 512)
         {
@@ -103,7 +104,7 @@ export class BleHandler
     async readLocationsArray()
     {   
         //Ensure the device has been connect first before proceeding
-        if(this.device === null)
+        if(this.device != null)
         {
             //Retrieves the integerLocationCharacteristic from the device, function will wait at this point until data is retrieved because of await
             var integerLocationsCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, 'ffffffff-ffff-ffff-ffff-fffffffffff3');
@@ -112,11 +113,12 @@ export class BleHandler
             //Retrieves the string descriptions characteristic for all locations from the device, the function will wait at this point until the data is recieved
             var stringDescriptionsCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, 'ffffffff-ffff-ffff-ffff-fffffffffff4');
             stringDescriptionsArray = this.readStringDescriptions(stringDescriptionsCharacteristic);
-            return {pointsLocationArray, stringDescriptionsArray};
+            
+            return [pointsLocationArray, stringDescriptionsArray];
         }
 
         console.log("ERROR: Attempting to access data when no connection was made with a device!");
-        //return null if the device is not connect
+        //return null if the device is not connected
         return null;
     }
 
@@ -153,11 +155,12 @@ export class BleHandler
             //the byte before each string holds a value of the size of that string
             let lengthBuffer = value.slice(i, i+1);
             //gives the amount of bytes to read to get the next string
-            let stringLength = lengthBuffer.readUInt8();
+            let stringLength = lengthBuffer.readInt8();
             //reads the string characters to a buffer based on the size of the string
             let stringBuffer = value.slice(i+1, i+1+stringLength);
             //Reads the characters in the array into an ascii string
             descriptionsArray[arrayIndex] = stringBuffer.toString('ascii');
+            console.log(descriptionsArray[arrayIndex]);
             //Increment the array index to place the next string in the correct location
             arrayIndex++;
             //offset the next i value with 1 byte for the length and for the length in bytes of the string

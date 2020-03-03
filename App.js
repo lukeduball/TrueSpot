@@ -20,7 +20,7 @@ export default class App extends Component
   componentDidMount()
   {
     //Start scanning for devices and register onBeaconDeviceConnected as the callback once connected to a device
-    this.bleHandler.startScanning(this.onBeaconDeviceConnected);
+    this.bleHandler.startScanning(this.onBeaconDeviceConnected.bind(this));
   }
 
   componentWillUnmount()
@@ -34,7 +34,6 @@ export default class App extends Component
     //Gets the location data as an array with point data first and the string descriptions second
     let locationsData = await this.bleHandler.readLocationsArray();
     this.setState({locationsArray: locationsData[0], descriptionsArray: locationsData[1]});
-    console.log("Callback function called");
   }
 
   modifyNotifyValues(error, characteristic)
