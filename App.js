@@ -36,61 +36,6 @@ export default class App extends Component
     this.setState({locationsArray: locationsData[0], descriptionsArray: locationsData[1]});
   }
 
-  modifyNotifyValues(error, characteristic)
-  {
-    if(error)
-    {
-      console.log(error.message);
-      return;
-    }
-    var value = Buffer.from(characteristic.value, "base64");
-    var number = value.readInt32LE();
-    console.log("Notify Update: "+number);
-  }
-
-  scanAndConnect()
-  {
-    this.bluetoothManager.startDeviceScan(null, null, (error, device) => 
-    {
-      if(error)
-      {
-        console.log(error.message);
-        //Handle errors here (this will stop the scanning)
-        return;
-      }
-
-      //Check if it is a device you are looking for based on its advertised data
-      if(device.name === 'Raspberry PI Beacon')
-      {
-        //Stop scanning if you are looking for one device
-        this.bluetoothManager.stopDeviceScan();
-        //Proceed with the connection
-        
-        device.connect()
-          .then(function(device)
-          {
-            console.log('Connecting to Raspberry PI Beacon!');
-            return device.discoverAllServicesAndCharacteristics();
-          })
-          .then(function(device)
-          {
-                var serviceUUID = 'ffffffff-ffff-ffff-ffff-fffffffffff0';
-                this.readDynamicReadValue(device, serviceUUID);
-                this.readLongDynamicValue(device, serviceUUID);
-
-                //Setup notify characteristic by calling the modifyNotifyValues function with the error and characteristic data passed
-                device.monitorCharacteristicForService(serviceUUID, 'ffffffff-ffff-ffff-ffff-fffffffffff5', (error, characteristic) => this.modifyNotifyValues(error, characteristic));
-          //Required to bind the 'this' otherwise it will not be in scope and cause an undefined error when calling a function
-          }.bind(this))
-          .catch((error) =>
-          {
-            console.log(""+ error);
-            //Handle errors
-          })
-      }
-    });
-  }
-
   render()
   {
     return (
