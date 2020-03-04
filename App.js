@@ -32,6 +32,8 @@ export default class App extends Component
   async onBeaconDeviceConnected()
   {
     //Gets the location data as an array with point data first and the string descriptions second
+    let mapData = await this.bleHandler.readMapImageBase64();
+    console.log("Map Data:" + mapData);
     let locationsData = await this.bleHandler.readLocationsArray();
     this.setState({locationsArray: locationsData[0], descriptionsArray: locationsData[1]});
   }

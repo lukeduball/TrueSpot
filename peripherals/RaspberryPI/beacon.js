@@ -2,22 +2,16 @@ var util = require('util');
 var bleno = require('bleno');
 var fs = require('fs');
 
-var imageData;
-fs.readFile('./floorplan.jpg', 'base64', function(error, data) {
-    if(error)
-    {
-        console.log(error);
-        return;
-    }
-    imageData = data;
-    console.log('Successfully load image!');
-});
+var imageData = fs.readFileSync('./floorplan.jpg', 'base64');
+console.log('Successfully loaded image!');
 
 var locationData = Array(630, 420,
                     1000, 800);
 var descriptionData = Array("Bedroom Door", "Living Room Center");
 
-var NAME = "Raspberry PI Beacon"
+var NAME = "Raspberry PI Beacon";
+
+var currentMTU = 23;
 
 var BlenoPrimaryService = bleno.PrimaryService;
 var BlenoCharacteristic = bleno.Characteristic;
@@ -25,35 +19,10 @@ var BlenoDescriptor = bleno.Descriptor;
 
 console.log('Starting Bleno...');
 
-var DynamicReadOnlyCharacteristic = function() {
-    DynamicReadOnlyCharacteristic.super_.call(this, {
-        uuid: 'fffffffffffffffffffffffffffffff2',
-        properties: ['read']
-    });
-};
-util.inherits(DynamicReadOnlyCharacteristic, BlenoCharacteristic);
-
-DynamicReadOnlyCharacteristic.prototype.onReadRequest = function(offset, callback) {
-    var result = this.RESULT_SUCCESS;
-    var data = new Buffer('dynamic value');
-
-    if(offset > data.length)
-    {
-        result = this.RESULT_INVALID_OFFSET;
-        data = null;
-    }
-    else
-    {
-        data = data.slice(offset);
-    }
-
-    callback(result, data);
-};
-
 var StringDescriptionsCharacteristic = function()
 {
     StringDescriptionsCharacteristic.super_.call(this, {
-        uuid: 'fffffffffffffffffffffffffffffff4',
+        uuid: 'fffffffffffffffffffffffffffffff2',
         properties: ['read']
     });
 }
@@ -92,16 +61,16 @@ StringDescriptionsCharacteristic.prototype.onReadRequest = function(offset, call
     callback(result, data);
 }
 
-var LongDynamicReadOnlyCharacteristic = function() {
-    LongDynamicReadOnlyCharacteristic.super_.call(this, {
-        uuid: 'fffffffffffffffffffffffffffffff3',
+var PointLocationsCharacteristic = function() {
+    PointLocationsCharacteristic.super_.call(this, {
+        uuid: 'fffffffffffffffffffffffffffffff1',
         properties: ['read']
     });
 }
 
-util.inherits(LongDynamicReadOnlyCharacteristic, BlenoCharacteristic);
+util.inherits(PointLocationsCharacteristic, BlenoCharacteristic);
 
-LongDynamicReadOnlyCharacteristic.prototype.onReadRequest = function(offset, callback) {
+PointLocationsCharacteristic.prototype.onReadRequest = function(offset, callback) {
     var result = this.RESULT_SUCCESS;
     var data = new Buffer(locationData.length * 4);
 
@@ -123,51 +92,48 @@ LongDynamicReadOnlyCharacteristic.prototype.onReadRequest = function(offset, cal
     callback(result, data);
 };
 
-var NotifyOnlyCharacteristic = function() {
-    NotifyOnlyCharacteristic.super_.call(this, {
-        uuid: 'fffffffffffffffffffffffffffffff5',
+var MapImageNotifyCharacteristic = function() {
+    MapImageNotifyCharacteristic.super_.call(this, {
+        uuid: 'fffffffffffffffffffffffffffffff3',
         properties: ['notify']
     });
 };
 
-util.inherits(NotifyOnlyCharacteristic, BlenoCharacteristic);
+util.inherits(MapImageNotifyCharacteristic, BlenoCharacteristic);
 
-NotifyOnlyCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
-    console.log('Notify Subscribe');
+MapImageNotifyCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
+    console.log('Subscribe for MapImage');
 
-    this.counter = 0;
-    this.changeInterval = setInterval(function() {
-        var data = new Buffer(4);
-        data.writeUInt32LE(this.counter, 0);
-
-        console.log('Notify update value: '+ this.counter);
-        updateValueCallback(data);
-        this.counter++;
-    }.bind(this), 5000);
-};
-
-NotifyOnlyCharacteristic.prototype.onUnsubscribe = function() {
-    console.log('Notify unsubscribe');
-
-    if(this.changeInterval)
+    let imageDataBuffer = Buffer.from(imageData);
+    let dataOffset = 0;
+    while(dataOffset < imageDataBuffer.length)
     {
-        clearInterval(this.changeInterval);
-        this.changeInterval = null;
+        let dataSize = currentMTU - 3;
+        updateValueCallback(imageDataBuffer.slice(dataOffset, dataOffset + dataSize));
+        dataOffset += dataSize;
     }
+    let finalBufferIndicator = new Buffer(1);
+    finalBufferIndicator.writeInt8(-127);
+    updateValueCallback(finalBufferIndicator);
+    console.log('Finished Sending Data');
 };
 
-NotifyOnlyCharacteristic.prototype.onNotify = function() {
-    console.log("Notify on notify call");
+MapImageNotifyCharacteristic.prototype.onUnsubscribe = function() {
+    console.log('Map image unsubscribe');
 };
+
+MapImageNotifyCharacteristic.prototype.onNotify = function() {
+
+};
+
 
 function SampleService() {
     SampleService.super_.call(this, {
         uuid: 'fffffffffffffffffffffffffffffff0',
         characteristics: [
-            new DynamicReadOnlyCharacteristic(),
-            new LongDynamicReadOnlyCharacteristic(),
+            new PointLocationsCharacteristic(),
             new StringDescriptionsCharacteristic(),
-            new NotifyOnlyCharacteristic()
+            new MapImageNotifyCharacteristic()
         ]
     });
 }
@@ -197,4 +163,9 @@ bleno.on('advertisingStart', function(error) {
             new SampleService()
         ]);
     }
+});
+
+bleno.on('mtuChange', function(mtu){
+    console.log('on -> mtuChange: New MTU value: '+mtu);
+    currentMTU = mtu;
 });

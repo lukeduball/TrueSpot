@@ -7,7 +7,10 @@ export class BleHandler
     constructor()
     {
         this.bluetoothManager = new BleManager();
-        this.SERVICE_UUID = 'ffffffff-ffff-ffff-ffff-fffffffffff0';
+        this.SERVICE_UUID =                 'ffffffff-ffff-ffff-ffff-fffffffffff0';
+        this.LOCATION_POINTS_UUID =         'ffffffff-ffff-ffff-ffff-fffffffffff1';
+        this.LOCATION_DESCRIPTIONS_UUID =   'ffffffff-ffff-ffff-ffff-fffffffffff2';
+        this.MAP_IMAGE_UUID =               'ffffffff-ffff-ffff-ffff-fffffffffff3';
         this.device = null;
     }
 
@@ -45,8 +48,10 @@ export class BleHandler
                 this.bluetoothManager.stopDeviceScan();
 
                 //Promise to connect to the device so we must wait to the promise is fullfilled using the .then
-                device.connect().then(function(device)
+                device.connect({autoConnect: false, requestMTU: 512}).then(function(device)
                 {
+                    
+                    console.log("The MTU is: " +device.mtu);
                     console.log('Connecting to Raspberry PI Beacon!');
                     //Retrieves all the services and characteristics the device supports, returns this as a promise so that they can be chained using the .then
                     return device.discoverAllServicesAndCharacteristics();
@@ -66,40 +71,53 @@ export class BleHandler
         });
     }
 
-    //This function reads a large chunk of data by writing offsets back to the peripheral to use for the next read
-    async readLargeData(serviceUUID, characteristicUUID, writeCharacteristicUUID)
+    async readMapImageBase64()
     {
-        var dataCharacteristic = await this.device.readCharacteristicForService(serviceUUID, characteristicUUID);
-        //Keep a buffer that will eventually contain the full data value
-        var fullData;
-        //If the data size is equal to 512 bytes, there is more data to recieve
-        while(dataCharacteristic.value.length === 512)
+        if(this.device != null)
         {
-            //Combines the data of both buffers
-            fullData = Buffer.concat([fullData, dataCharacteristic.value.slice(0, 511)]);
-            let remainingDataBuffer = dataCharacteristic.value.slice(511, 512);
-            //Read the integer value for the last byte to see if there is more data to recieve
-            let remainingDataLength = remainingDataBuffer.readUInt8();
-            //If the remaining data is not equal to zero write the next offset to the peripheral and read more data
-            if(remainingDataLength != 0)
-            {   
-                //0 indicates that the peripheral should not reset the offset for the data
-                let writeData = Buffer.from(0);
-                //Wait for a response from the characteristic that the write was successful
-                await this.device.writeCharacteristicWithResponseForService(serviceUUID, writeCharacteristicUUID, writeData);
-                //Request the next chunk of data
-                dataCharacteristic = await this.device.readCharacteristicForService(serviceUUID, characteristicUUID);
-            }
-        }
-         //1 indicates that the peripheral should reset the offset for the data
-         let writeData = Buffer.from(1);
-         //Wait for a response form the characteristic that the write was succesful
-         await this.device.writeCharacteristicWithResponseForService(serviceUUID, writeCharacteristicUUID, writeData);
+            //Creates a promise that will be resolved once all the map data has been read from the notify characteristic
+            let readDataPromise = new Promise(function (resolve, reject)
+            {
+                //Keeps track of the current position of data to be read into the array
+                let arrayCounter = 0;
+                //Array to hold all of the buffers for each base64 image data update
+                let imageDataArray = new Array();
+                //Subscribes to the notify characteristic for the map image to recieve data each time the map image data is sent
+                var subscription = this.device.monitorCharacteristicForService(this.SERVICE_UUID, this.MAP_IMAGE_UUID, function(error, characteristic)
+                {
+                    if(error)
+                    {
+                        console.log(error.message);
+                    }
+                    //Read the map data sent from the characteristic as a base64 value
+                    let characteristicValue = Buffer.from(characteristic.value, "base64");
+                    //If only one byte is sent and the value of that byte is -127 in decimal, reslove this promise
+                    if(characteristicValue.length === 1 && characteristicValue.readInt8() === -127)
+                    {
+                        //Resolves the promise and sends back the array with the subscription so the data stream can be closed for the map image, and send back the base64 buffer array
+                        resolve([subscription, imageDataArray]);
+                    }
+                    //Read the current buffer read into the buffer array
+                    imageDataArray[arrayCounter] = characteristicValue;
+                    arrayCounter++;
+                }); 
+            //this needs to be bound so that this.device can be accessed because the scope is within the promise function  
+            }.bind(this));
 
-        //Append the last piece of data
-        fullData = Buffer.concat([fullData, dataCharacteristic.value]);
-        return fullData;
-    };
+            //stops execution of this function until the readDataPromise value is resolved
+            var result = await readDataPromise;
+            //removes this device from being subscribed to the map image data value
+            result[0].remove();
+            //takes all of the map image buffers in the returned map image buffer array and converts it into a single buffer
+            var resultBuffer = Buffer.concat(result[1]);
+            //writes the base64 map image string from the buffer and returns it map to the called function as the map image data
+            return resultBuffer.toString();
+        }
+
+        console.log("ERROR: Attempting to access data when no connection was made with a device!");
+        //return null if the device is not connected
+        return null;
+    }
 
     async readLocationsArray()
     {   
@@ -107,13 +125,13 @@ export class BleHandler
         if(this.device != null)
         {
             //Retrieves the integerLocationCharacteristic from the device, function will wait at this point until data is retrieved because of await
-            var integerLocationsCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, 'ffffffff-ffff-ffff-ffff-fffffffffff3');
+            var integerLocationsCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, this.LOCATION_POINTS_UUID);
             pointsLocationArray = this.readIntegerLocations(integerLocationsCharacteristic);
 
             //Retrieves the string descriptions characteristic for all locations from the device, the function will wait at this point until the data is recieved
-            var stringDescriptionsCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, 'ffffffff-ffff-ffff-ffff-fffffffffff4');
+            var stringDescriptionsCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, this.LOCATION_DESCRIPTIONS_UUID);
             stringDescriptionsArray = this.readStringDescriptions(stringDescriptionsCharacteristic);
-            
+
             return [pointsLocationArray, stringDescriptionsArray];
         }
 
