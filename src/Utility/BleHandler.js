@@ -96,6 +96,8 @@ export class BleHandler
                     {
                         //Resolves the promise and sends back the array with the subscription so the data stream can be closed for the map image, and send back the base64 buffer array
                         resolve([subscription, imageDataArray]);
+                        //Stop execution of the function so that extra data does not corrupt the image data
+                        return;
                     }
                     //Read the current buffer read into the buffer array
                     imageDataArray[arrayCounter] = characteristicValue;
