@@ -87,7 +87,8 @@ export class BleHandler
                 {
                     if(error)
                     {
-                        console.log(error.message);
+                        console.log("ERROR: " + error.message);
+                        return;
                     }
                     //Read the map data sent from the characteristic as a base64 value
                     let characteristicValue = Buffer.from(characteristic.value, "base64");

@@ -12,7 +12,7 @@ export class MapImage extends Component
     //Contains point array of all the locaations on the map
     locationsArray: new Array(),
     //Contains the string descriptions of the locations on the map
-    descriptionsArray: new Array()
+    descriptionsArray: new Array(),
   };
 
   constructor(props)
@@ -35,22 +35,51 @@ export class MapImage extends Component
     this.screenHeight = Math.round(Dimensions.get('window').height);
 
     //Keeps track of the unscaled image width and height of the map image
-    this.NORMAL_IMAGE_WIDTH = 1473;
-    this.NORMAL_IMAGE_HEIGHT = 1652;
-    //Clamps how far an image can be zoomed in on
-    this.maxWidth = 1473 * 2;
+    this.NORMAL_IMAGE_WIDTH = 1473;  
+    this.NORMAL_IMAGE_HEIGHT = 1652; 
+    //The original image sizes used for reference are Width:1473 and Height:1652
 
-    var w = this.NORMAL_IMAGE_WIDTH;
+    //Clamps how far an image can be zoomed in on
+    this.maxWidth = 1;
+
     //Places the x location of the image in the center of the screen
-    var x = (this.screenWidth - w) / 2; 
+    var x = (this.screenWidth - this.NORMAL_IMAGE_WIDTH) / 2; 
     var y = 0;
 
     //Sets the initial state of this component
-    this.state = {position: new Point(x, y),
-                  width: w, 
-                  height: this.NORMAL_IMAGE_HEIGHT};
+    this.state = {position: new Point(0, 0),
+                  width: this.NORMAL_IMAGE_WIDTH, 
+                  height: this.NORMAL_IMAGE_HEIGHT
+                 };
 
-    //sets up all the functions to allow for touch events to be captured
+    //Gets the image width and height from the base64 image data and updates the width and height information for the component
+    Image.getSize('data:image/jpg;base64,'+this.props.base64ImageData, this.setupImageDimensions.bind(this));
+
+    //this function registers functions for all touch events to be captured
+    this.setupPanResponder();
+  }
+
+  //Sets up the component with the correct width and height for the downloaded map image
+  setupImageDimensions(width, height)
+  {
+      this.NORMAL_IMAGE_WIDTH = width;
+      this.NORMAL_IMAGE_HEIGHT = height;
+      this.maxWidth = width * 2;
+
+      //Places the x location of the image in the center of the screen
+      var x = (this.screenWidth - this.NORMAL_IMAGE_WIDTH) / 2; 
+      var y = 0;
+
+      //Sets the initial state of this component once the width and height have been aquired from the image
+      this.setState({position: new Point(x, y),
+                  width: this.NORMAL_IMAGE_WIDTH, 
+                  height: this.NORMAL_IMAGE_HEIGHT
+                 });
+  }
+
+  //Sets up the pan responder to capture all touch events
+  setupPanResponder()
+  {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => true,
       onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
@@ -173,8 +202,6 @@ export class MapImage extends Component
     //If the last frame was not a pan event set the initial point reference for a pan event
     if(this.lastPan == null)
     {
-      var lastPanX = evt.nativeEvent.touches[0].locationX;
-      var lastPanY = evt.nativeEvent.touches[0].locationY;
       this.lastPan = new Point(touchPoint.x, touchPoint.y);
       return;
     }
@@ -282,7 +309,7 @@ export class MapImage extends Component
           width: this.state.width,
           height: this.state.height,
         }}
-        source = {require('../assets/floorplan.jpg')}
+        source = {{uri:'data:image/jpg;base64,'+this.props.base64ImageData}}
         />
         {LocationsArray}
       </View>

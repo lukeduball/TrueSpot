@@ -106,16 +106,28 @@ MapImageNotifyCharacteristic.prototype.onSubscribe = function(maxValueSize, upda
 
     let imageDataBuffer = Buffer.from(imageData);
     let dataOffset = 0;
-    while(dataOffset < imageDataBuffer.length)
+    //Need to set this interval otherwise large data sets will overflow the buffer and cause packet errors
+    var dataInterval = setInterval(function()
     {
-        let dataSize = currentMTU - 3;
-        updateValueCallback(imageDataBuffer.slice(dataOffset, dataOffset + dataSize));
-        dataOffset += dataSize;
-    }
-    let finalBufferIndicator = new Buffer(1);
-    finalBufferIndicator.writeInt8(-127);
-    updateValueCallback(finalBufferIndicator);
-    console.log('Finished Sending Data');
+        for(let i = 0; i < 100; i++)
+        {
+            if(dataOffset < imageDataBuffer.length)
+            {
+                let dataSize = currentMTU - 3;
+                updateValueCallback(imageDataBuffer.slice(dataOffset, dataOffset + dataSize));
+                dataOffset += dataSize;
+            }
+            else
+            {
+                clearInterval(dataInterval);
+                let finalBufferIndicator = new Buffer(1);
+                finalBufferIndicator.writeInt8(-127);
+                updateValueCallback(finalBufferIndicator);
+                console.log('Finished Sending Data');
+                return;
+            }
+        }
+    }, 1000);
 };
 
 MapImageNotifyCharacteristic.prototype.onUnsubscribe = function() {

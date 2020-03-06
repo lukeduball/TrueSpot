@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, View} from 'react-native';
+import { StyleSheet, View, Text} from 'react-native';
 import { MapImage } from './src/MapImage.js';
 import { Buffer } from 'buffer'
 import { RotationGestureHandler } from 'react-native-gesture-handler';
@@ -10,10 +10,12 @@ export default class App extends Component
   constructor()
   {
     super();
+
     this.bleHandler = new BleHandler();
     this.state = {
-      locationsArray: new Array(),
-      descriptionsArray: new Array()
+      componentToRender: <Text>
+                          Loading...
+                          </Text>
     };
   }
 
@@ -33,16 +35,15 @@ export default class App extends Component
   {
     //Gets the location data as an array with point data first and the string descriptions second
     let mapData = await this.bleHandler.readMapImageBase64();
-    console.log("Map Data:" + mapData);
     let locationsData = await this.bleHandler.readLocationsArray();
-    this.setState({locationsArray: locationsData[0], descriptionsArray: locationsData[1]});
+    this.setState({componentToRender: <MapImage base64ImageData={mapData} locationsArray={locationsData[0]} descriptionsArray={locationsData[1]} />});
   }
 
   render()
   {
     return (
       <View>
-        <MapImage locationsArray={this.state.locationsArray} descriptionsArray={this.state.descriptionsArray} />
+        {this.state.componentToRender}
       </View>
     );
   }
