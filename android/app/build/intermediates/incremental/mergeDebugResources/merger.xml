@@ -190,7 +190,7 @@
     </declare-styleable><declare-styleable name="StateListDrawableItem">
         
         <attr name="android:drawable"/>
-    </declare-styleable></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.github.bumptech.glide:glide:4.9.0$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\jetified-glide-4.9.0.aar\faa8ca5d34bfa25a91234ac0e2628cab\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.github.bumptech.glide:glide:4.9.0" from-dependency="true" generated-set="com.github.bumptech.glide:glide:4.9.0$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\jetified-glide-4.9.0.aar\faa8ca5d34bfa25a91234ac0e2628cab\res"><file path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\jetified-glide-4.9.0.aar\faa8ca5d34bfa25a91234ac0e2628cab\res\values\values.xml" qualifiers=""><item name="glide_custom_view_target_tag" type="id"/></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.facebook.fresco:drawee:2.0.0$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\drawee-2.0.0.aar\3692498092664017893ca4557b04ef43\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.facebook.fresco:drawee:2.0.0" from-dependency="true" generated-set="com.facebook.fresco:drawee:2.0.0$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\drawee-2.0.0.aar\3692498092664017893ca4557b04ef43\res"><file path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\drawee-2.0.0.aar\3692498092664017893ca4557b04ef43\res\values\values.xml" qualifiers=""><declare-styleable name="GenericDraweeHierarchy">
+    </declare-styleable></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.github.bumptech.glide:glide:4.9.0$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\jetified-glide-4.9.0.aar\faa8ca5d34bfa25a91234ac0e2628cab\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.github.bumptech.glide:glide:4.9.0" from-dependency="true" generated-set="com.github.bumptech.glide:glide:4.9.0$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\jetified-glide-4.9.0.aar\faa8ca5d34bfa25a91234ac0e2628cab\res"><file path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\jetified-glide-4.9.0.aar\faa8ca5d34bfa25a91234ac0e2628cab\res\values\values.xml" qualifiers=""><item name="glide_custom_view_target_tag" type="id"/></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.facebook.fresco:drawee:2.1.0$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\drawee-2.1.0.aar\1bca57e8045cbb4beca1c55cbe07b8b1\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="com.facebook.fresco:drawee:2.1.0" from-dependency="true" generated-set="com.facebook.fresco:drawee:2.1.0$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\drawee-2.1.0.aar\1bca57e8045cbb4beca1c55cbe07b8b1\res"><file path="C:\Users\Luke\.gradle\caches\transforms-1\files-1.1\drawee-2.1.0.aar\1bca57e8045cbb4beca1c55cbe07b8b1\res\values\values.xml" qualifiers=""><declare-styleable name="GenericDraweeHierarchy">
 
     
     <eat-comment/>
@@ -319,7 +319,7 @@
     
     <attr format="dimension" name="roundingBorderWidth"/>
     
-    <attr format="color" name="roundingBorderColor"/>
+    <attr format="color|reference" name="roundingBorderColor"/>
     
     <attr format="dimension" name="roundingBorderPadding"/>
 
@@ -5138,7 +5138,7 @@
     
     <attr format="dimension" name="roundingBorderWidth"/>
     
-    <attr format="color" name="roundingBorderColor"/>
+    <attr format="color|reference" name="roundingBorderColor"/>
     
     <attr format="dimension" name="roundingBorderPadding"/>
 

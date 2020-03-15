@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Image, View, Text, Dimensions} from 'react-native';
+import {Image, View, Text} from 'react-native';
 import {Point} from './Utility/Point';
 
 export class LocationOverlay extends Component

@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text} from 'react-native';
 import { MapImage } from './src/MapImage.js';
-import { Buffer } from 'buffer'
 import { RotationGestureHandler } from 'react-native-gesture-handler';
 import { BleHandler } from './src/Utility/BleHandler.js'
+import { LoadingScreen } from './src/LoadingScreen.js'
 
 export default class App extends Component
 {
@@ -13,9 +13,7 @@ export default class App extends Component
 
     this.bleHandler = new BleHandler();
     this.state = {
-      componentToRender: <Text>
-                          Loading...
-                          </Text>
+      componentToRender: <LoadingScreen/>
     };
   }
 
@@ -42,9 +40,7 @@ export default class App extends Component
   render()
   {
     return (
-      <View>
-        {this.state.componentToRender}
-      </View>
+      this.state.componentToRender
     );
   }
 }

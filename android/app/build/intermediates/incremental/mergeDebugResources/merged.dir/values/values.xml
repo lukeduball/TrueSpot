@@ -4252,7 +4252,7 @@
     <!-- Rounding border width-->
     <attr format="dimension" name="roundingBorderWidth"/>
     <!-- Rounding border color -->
-    <attr format="color" name="roundingBorderColor"/>
+    <attr format="color|reference" name="roundingBorderColor"/>
     <!-- Rounding border padding -->
     <attr format="dimension" name="roundingBorderPadding"/>
 
