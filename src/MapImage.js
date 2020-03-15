@@ -35,16 +35,12 @@ export class MapImage extends Component
     this.screenHeight = Math.round(Dimensions.get('window').height);
 
     //Keeps track of the unscaled image width and height of the map image
-    this.NORMAL_IMAGE_WIDTH = 1473;  
-    this.NORMAL_IMAGE_HEIGHT = 1652; 
+    this.NORMAL_IMAGE_WIDTH = 1;  
+    this.NORMAL_IMAGE_HEIGHT = 1; 
     //The original image sizes used for reference are Width:1473 and Height:1652
 
     //Clamps how far an image can be zoomed in on
     this.maxWidth = 1;
-
-    //Places the x location of the image in the center of the screen
-    var x = (this.screenWidth - this.NORMAL_IMAGE_WIDTH) / 2; 
-    var y = 0;
 
     //Sets the initial state of this component
     this.state = {position: new Point(0, 0),

@@ -23,7 +23,16 @@ export class LocationOverlay extends Component
         this.NORMAL_HEIGHT = 50;
         this.NORMAL_WIDTH = 33;
         //With a normal size, 15 is the desired font size. This value is used to adjust the font for different widths
-        this.FONT_SIZE_ADJUSTER = this.props.defaultParentWidth / 15;
+        this.FONT_SIZE_ADJUSTER = 1;
+    }
+
+    //Since the loading of the image width and height is asychronous, the FONT_SIZE_ADJUSTER could be incorrect when called from the constructor and must be updated in this function
+    componentDidUpdate(oldProps)
+    {
+        if(oldProps.defaultParentWidth != this.props.defaultParentWidth)
+        {
+            this.FONT_SIZE_ADJUSTER = this.props.defaultParentWidth / 15;
+        }
     }
 
     //Returns the scaled coordinate by converting from local image space to screen space
