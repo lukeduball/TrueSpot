@@ -12,6 +12,8 @@ export class BleHandler
         this.LOCATION_DESCRIPTIONS_UUID =   'ffffffff-ffff-ffff-ffff-fffffffffff2';
         this.MAP_IMAGE_UUID =               'ffffffff-ffff-ffff-ffff-fffffffffff3';
         this.device = null;
+
+        this.dataBeaconsDictionary = {};
     }
 
     cleanUp()
@@ -19,21 +21,28 @@ export class BleHandler
         this.bluetoothManager.destroy();
     }
 
-    startScanning(callback)
+    startScanning()
     {
         const subscription = this.bluetoothManager.onStateChange((state) =>
         {
             if(state === 'PoweredOn')
             {
-                this.scanAndConnect(callback);
+                this.scanForDataBeacons();
                 subscription.remove();
             }
         }, true);
     }
 
-    scanAndConnect(callback)
+    scanForDataBeacons(callback)
     {
-        this.bluetoothManager.startDeviceScan(null, null, (error, device) =>
+        console.log("Scanning");
+        //Every two seconds, clear the data beacon list so that beacons no longer in range will not be detected
+        this.dataBeaconClearInterval = setInterval(function()
+        {
+            this.dataBeaconsDictionary = {};
+        }.bind(this), 2000);
+
+        this.bluetoothManager.startDeviceScan(null, null, function(error, device)
         {
             if(error)
             {
@@ -42,32 +51,55 @@ export class BleHandler
                 return;
             }
 
-            if(device.name === 'Raspberry PI Beacon')
+            //Check if the device is a true spot data beacon that can be connected to
+            if(device.name != null && device.name.startsWith('TS_DataBeacon_'))
             {
-                //Stop scanning if we only want to connect to one device
-                this.bluetoothManager.stopDeviceScan();
-
-                //Promise to connect to the device so we must wait to the promise is fullfilled using the .then
-                device.connect({autoConnect: false, requestMTU: 512}).then(function(device)
+                //Checks if a device with the given name has already been added to the dictionary
+                if(device.name in this.dataBeaconsDictionary)
                 {
-                    
-                    console.log("The MTU is: " +device.mtu);
-                    console.log('Connecting to Raspberry PI Beacon!');
-                    //Retrieves all the services and characteristics the device supports, returns this as a promise so that they can be chained using the .then
-                    return device.discoverAllServicesAndCharacteristics();
-                }).then(function(device)
+                    //Checks if the device we are checking is already added to the dictionary 
+                    if(device.id != this.dataBeaconsDictionary[''+device.name].id)
+                    {
+                        if(device.rssi < this.dataBeaconsDictionary[''+device.name].rssi)
+                        {
+                            this.dataBeaconsDictionary[''+device.name] = device;
+                            callback();
+                        }
+                    }
+                }
+                else
                 {
-                    //Sets the device as the current device
-                    this.device = device;
-                    //Calls the callback function to alert that it has connected to a device
+                    this.dataBeaconsDictionary[''+device.name] = device;
                     callback();
-                //In order to call functions from this class, this must be bound to the function because the scope of the function is within the context of device
-                }.bind(this)).catch((error) =>
-                {
-                    //Logs the error message if a promise does not resolve for any of the chained functions
-                    console.log(error.message);
-                });
+                }
             }
+        }.bind(this));
+    }
+
+    connectToDataBeacon(device, callback)
+    {
+        //Stop scanning for data beacons once you attempt to connect to a data beacon device
+        this.bluetoothManager.stopDeviceScan();
+
+        //Promise to connect to the device so we must wait to the promise is fullfilled using the .then
+        device.connect({autoConnect: false, requestMTU: 512}).then(function(device)
+        {
+            console.log("The MTU is: " +device.mtu);
+            let name = device.name.split("_")[2];
+            console.log('Connecting to '+name+' Beacon!');
+            //Retrieves all the services and characteristics the device supports, returns this as a promise so that they can be chained using the .then
+            return device.discoverAllServicesAndCharacteristics();
+        }).then(function(device)
+        {
+            //Sets the device as the current device
+            this.device = device;
+            //Calls the callback function to alert that it has connected to a device
+            callback();
+        //In order to call functions from this class, this must be bound to the function because the scope of the function is within the context of device
+        }.bind(this)).catch((error) =>
+        {
+            //Logs the error message if a promise does not resolve for any of the chained functions
+            console.log(error.message);
         });
     }
 

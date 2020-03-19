@@ -31,6 +31,7 @@ export class LocationOverlay extends Component
     {
         if(oldProps.defaultParentWidth != this.props.defaultParentWidth)
         {
+            //With a normal size, 15 is the desired font size. This value is used to adjust the font for different widths
             this.FONT_SIZE_ADJUSTER = this.props.defaultParentWidth / 15;
         }
     }

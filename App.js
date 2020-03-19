@@ -4,6 +4,7 @@ import { MapImage } from './src/MapImage.js';
 import { RotationGestureHandler } from 'react-native-gesture-handler';
 import { BleHandler } from './src/Utility/BleHandler.js'
 import { LoadingScreen } from './src/LoadingScreen.js'
+import { ScanningScreen } from './src/ScanningScreen'
 
 export default class App extends Component
 {
@@ -13,14 +14,14 @@ export default class App extends Component
 
     this.bleHandler = new BleHandler();
     this.state = {
-      componentToRender: <LoadingScreen/>
+      componentToRender: <ScanningScreen bleHandler={this.bleHandler}/>
     };
   }
 
   componentDidMount()
   {
-    //Start scanning for devices and register onBeaconDeviceConnected as the callback once connected to a device
-    this.bleHandler.startScanning(this.onBeaconDeviceConnected.bind(this));
+    //This is the callback function with a bound this for reference later
+    //this.onBeaconDeviceConnected.bind(this)
   }
 
   componentWillUnmount()

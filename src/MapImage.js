@@ -160,22 +160,9 @@ export class MapImage extends Component
 
     //Calculates the amount zoom by getting a ratio of the current distance with the last touch distance
     var zoom = distance / this.lastTouchDistance;
-    var newWidth = this.state.width * zoom;
-    var newHeight = this.state.height * zoom;
-    //Ensures the width of the image can not be less than the screen width while keeping the aspect ratio with the height
-    if(newWidth < this.screenWidth)
-    {
-      var ratio = newHeight / newWidth;
-      newWidth = this.screenWidth;
-      newHeight = ratio * newWidth;
-    }
-    //Ensures the width of the image can not be greater than the max width specified while keeping the aspect ratio with the height
-    else if(newWidth > this.maxWidth)
-    {
-      var ratio = newHeight / newWidth;
-      newWidth = this.maxWidth;
-      newHeight = ratio * newWidth;
-    }
+    let clampedWidthAndHeight = this.clampZoomWidthAndHeight(this.state.width * zoom, this.state.height * zoom);
+    var newWidth = clampedWidthAndHeight[0];
+    var newHeight = clampedWidthAndHeight[1]; 
 
     //Gets the new position of the image to keep the image coordinate at the same touch location on the screen
     var newPos = this.getScaledLocation(newWidth, newHeight, this.imageCoords, this.screenTouch);
@@ -234,6 +221,26 @@ export class MapImage extends Component
     var scaleY = hght / this.NORMAL_IMAGE_HEIGHT
     var newYPos = screenPoint.y - imagePoint.y * scaleY;
     return new Point(newXPos, newYPos);
+  }
+
+  clampZoomWidthAndHeight(newWidth, newHeight)
+  {
+    //Ensures the width of the image can not be less than the screen width while keeping the aspect ratio with the height
+    if(newWidth < this.screenWidth)
+    {
+      var ratio = newHeight / newWidth;
+      newWidth = this.screenWidth;
+      newHeight = ratio * newWidth;
+    }
+    //Ensures the width of the image can not be greater than the max width specified while keeping the aspect ratio with the height
+    else if(newWidth > this.maxWidth)
+    {
+      var ratio = newHeight / newWidth;
+      newWidth = this.maxWidth;
+      newHeight = ratio * newWidth;
+    }
+
+    return [newWidth, newHeight];
   }
 
   //Returns an x component of an image that is within the bounds of the screen
