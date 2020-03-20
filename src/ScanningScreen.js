@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import {View, TouchableOpacity, FlatList, StyleSheet, Alert, Text } from 'react-native';
 
-function Item({name}) {
+//Display component for each list item
+function Item({name, device, pressFunction}) {
     return(
-        <TouchableOpacity onPress={() => Alert.alert(name+" Pressed")}
+        <TouchableOpacity onPress={() => pressFunction(device)}
             style={styles.item}
         >
             <Text style={styles.text}>{name}</Text>
@@ -13,8 +14,10 @@ function Item({name}) {
 
 export class ScanningScreen extends Component
 {
+    //Inherits a callback function and bleHandler from the parent component
     static defaultProps = {
-        bleHandler: null
+        bleHandler: null,
+        connectToDeviceCallback: null,
     }
 
     constructor(props)
@@ -25,21 +28,26 @@ export class ScanningScreen extends Component
         this.props.bleHandler.scanForDataBeacons(this.updateList.bind(this));
     }
 
+    //This is a callback function that will be called once a new beacon is added to the list
     updateList()
     {
+        //Forces the components render function to run
         this.forceUpdate();
     }
 
     render()
     {
+        //Puts all of the data beacons data into an array so it can be rendered in a list
         data = Array();
         const keys = Object.keys(this.props.bleHandler.dataBeaconsDictionary);
         for(const key of keys)
         {
             let device = this.props.bleHandler.dataBeaconsDictionary[key];
+            //Removes the TS_DataBeacon_ to extract the unique part of the name
             let name = device.name.split("_")[2];
             data.push({key: name, device: device});
         }
+        //Sorts the displayed list by the rssi value so the closest beacon is showed at the top
         data.sort(function(a, b)
         {
             return a['device'].rssi - b['device'].rssi;
@@ -47,12 +55,17 @@ export class ScanningScreen extends Component
 
         return (
             <View style={styles.container}>
-                <FlatList
-                    data={data}
-                    renderItem={({item}) => (
-                        <Item name={item.key}/>
-                    )}
-                />
+                <View style={styles.headerContainer}>
+                    <Text style={styles.header}> Beacons </Text>
+                </View>
+                <View style={styles.listContainer}>
+                    <FlatList
+                        data={data}
+                        renderItem={({item}) => (
+                            <Item name={item.key} device={item.device} pressFunction={this.props.connectToDeviceCallback}/>
+                        )}
+                    />
+                </View>
             </View>
         );
     }
@@ -67,9 +80,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#000',
         borderWidth: 1,
         borderBottomColor: 'white',
-        padding: 10
+        padding: 10,
     },
     text: {
-        color: 'white'
-    } 
+        color: 'white',
+        textAlignVertical: 'center'
+    },
+    listContainer:{
+    },
+    header: {
+        fontSize: 40,
+        textAlign: 'center'
+    },
+    headerContainer: {
+        backgroundColor: 'white',
+    }
 });

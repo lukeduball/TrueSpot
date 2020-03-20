@@ -14,19 +14,26 @@ export default class App extends Component
 
     this.bleHandler = new BleHandler();
     this.state = {
-      componentToRender: <ScanningScreen bleHandler={this.bleHandler}/>
+      componentToRender: <ScanningScreen bleHandler={this.bleHandler} connectToDeviceCallback={this.connectToDataBeacon.bind(this)}/>
     };
   }
 
   componentDidMount()
   {
-    //This is the callback function with a bound this for reference later
-    //this.onBeaconDeviceConnected.bind(this)
+
   }
 
   componentWillUnmount()
   {
     this.bleHandler.cleanUp();
+  }
+
+  connectToDataBeacon(device)
+  {
+    //Tells the bleHandler to attempt to connect to the specified beacon
+    this.bleHandler.connectToDataBeacon(device, this.onBeaconDeviceConnected.bind(this));
+    //Changes the render component to show the loading screen while passing data
+    this.setState({componentToRender: <LoadingScreen/>});
   }
 
   //this function is called once connected to a peripheral beacon

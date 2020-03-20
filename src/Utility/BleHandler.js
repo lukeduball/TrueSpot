@@ -33,9 +33,9 @@ export class BleHandler
         }, true);
     }
 
+    //Scans for all devices with the name TS_DataBeacon_... and adds them to the list and calling the callback function when one is added
     scanForDataBeacons(callback)
     {
-        console.log("Scanning");
         //Every two seconds, clear the data beacon list so that beacons no longer in range will not be detected
         this.dataBeaconClearInterval = setInterval(function()
         {
@@ -189,7 +189,6 @@ export class BleHandler
             var coordinateX = value.slice(offset, offset+4);
             //slice the data in the buffer to get the integer(4 bytes) y value
             var coordinateY = value.slice(offset+4, offset+8);
-            console.log(coordinateX.readUInt32LE() + ":" + coordinateY.readUInt32LE());
             //Read the results of the new buffers into unsigned integer for each coordinate to create a point
             locationArray[i] = new Point(coordinateX.readUInt32LE(), coordinateY.readUInt32LE());
         }
@@ -213,7 +212,6 @@ export class BleHandler
             let stringBuffer = value.slice(i+1, i+1+stringLength);
             //Reads the characters in the array into an ascii string
             descriptionsArray[arrayIndex] = stringBuffer.toString('ascii');
-            console.log(descriptionsArray[arrayIndex]);
             //Increment the array index to place the next string in the correct location
             arrayIndex++;
             //offset the next i value with 1 byte for the length and for the length in bytes of the string
