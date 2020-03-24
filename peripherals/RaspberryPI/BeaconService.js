@@ -15,7 +15,7 @@ function BeaconService() {
         characteristics: [
             new PointLocationsCharacteristic(),
             new StringDescriptionsCharacteristic(),
-            new MapImageNotifyCharacteristic()
+            new MapImageNotifyCharacteristic(),
         ]
     });
 }

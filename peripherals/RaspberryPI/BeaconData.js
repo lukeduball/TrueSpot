@@ -15,5 +15,5 @@ module.exports =
     imageData: imageData,
     locationData: locationData,
     descriptionData: descriptionData,
-    currentMTU: currentMTU
+    currentMTU: currentMTU,
 }
