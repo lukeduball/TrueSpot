@@ -12,7 +12,9 @@ export class BleHandler
         this.LOCATION_DESCRIPTIONS_UUID =   'ffffffff-ffff-ffff-ffff-fffffffffff2';
         this.MAP_IMAGE_UUID =               'ffffffff-ffff-ffff-ffff-fffffffffff3';
         this.device = null;
+        this.currentNameIdentifier = null;
 
+        this.signalBeaconArray = {};
         this.dataBeaconsDictionary = {};
     }
 
@@ -31,6 +33,61 @@ export class BleHandler
                 subscription.remove();
             }
         }, true);
+    }
+
+    //Scans for all devices with the name TS_... whose RSSI and position value can be used to calculate a position
+    scanForSignalBeacons()
+    {
+        this.device.cancelConnection().then(function(){
+            this.bluetoothManager.startDeviceScan(null, null, function(error, device)
+            {
+                if(error)
+                {
+                    console.log(error.message);
+                    //Stop scanning if an error occurs
+                    return;
+                }
+
+                //Check if the device is a true spot signal beacon
+                if(device.name != null && device.name.startsWith('TS_'))
+                {
+                    //Get the unique name of the beacon array
+                    let name = device.name.split('_')[2];
+                    //Check if the TS beacon to connect to has the correct unique identifier name
+                    if(name == this.currentNameIdentifier)
+                    {
+                        this.signalBeaconArray[device.id] = device;
+                    }
+                }
+            }.bind(this));
+        }.bind(this));
+    }
+
+    async updateRSSIValues()
+    {
+        //Stores all the async updates to the RSSI updates
+        let allReadRSSIPromises = new Array(this.signalBeaconArray.length);
+        for(let i = 0; i < this.signalBeaconArray.length; i++)
+        {
+            let beacon = this.signalBeaconArray[i];
+            //store the promise for reading the devices new RSSI value
+            allReadRSSIPromises[i] = beacon.readRSSI();
+            allReadRSSIPromises[i].then(function(device){
+                console.log(device.txPowerLevel + ":" + device.rssi);
+                console.log(device);
+                let exponent = (-31 - device.rssi) / (10 * 3);
+                let distance = Math.pow(10, exponent);
+                console.log('Distance: '+distance);
+                this.signalBeaconArray[i] = device;
+            }.bind(this));
+        }
+
+        //Await all the promises so all values are updated before sorting the list by RSSI values
+        await Promise.all(allReadRSSIPromises);
+        //Sort the list so that the best signal strength is at the top (RSSI values are negative)
+        this.signalBeaconArray.sort(function(a, b){
+            a.rssi > b.rssi;
+        });
     }
 
     //Scans for all devices with the name TS_DataBeacon_... and adds them to the list and calling the callback function when one is added
@@ -60,7 +117,8 @@ export class BleHandler
                     //Checks if the device we are checking is already added to the dictionary 
                     if(device.id != this.dataBeaconsDictionary[''+device.name].id)
                     {
-                        if(device.rssi < this.dataBeaconsDictionary[''+device.name].rssi)
+                        //Check if the rssi value is lower than the previous (rssi value is negative) if it is update the entry
+                        if(device.rssi > this.dataBeaconsDictionary[''+device.name].rssi)
                         {
                             this.dataBeaconsDictionary[''+device.name] = device;
                             callback();
@@ -93,6 +151,9 @@ export class BleHandler
         {
             //Sets the device as the current device
             this.device = device;
+            this.currentNameIdentifier = device.name.split('_')[2];
+            //Add the current beacon device to the signal array
+            //this.signalBeaconArray.push(device);
             //Calls the callback function to alert that it has connected to a device
             callback();
         //In order to call functions from this class, this must be bound to the function because the scope of the function is within the context of device

@@ -43,6 +43,20 @@ export default class App extends Component
     let mapData = await this.bleHandler.readMapImageBase64();
     let locationsData = await this.bleHandler.readLocationsArray();
     this.setState({componentToRender: <MapImage base64ImageData={mapData} locationsArray={locationsData[0]} descriptionsArray={locationsData[1]} />});
+    //Needs to be after all the data is sent so that the device can be disconnected to only use its advertised data
+    this.bleHandler.scanForSignalBeacons();
+
+    setInterval(function()
+    {
+      
+      for(const key of Object.keys(this.bleHandler.signalBeaconArray))
+      {
+        let device = this.bleHandler.signalBeaconArray[key];
+        let exponent = (device.txPowerLevel - device.rssi) / (10 * 3);
+        let distance = Math.pow(10, exponent);
+        console.log('Distance: '+distance);
+      }
+    }.bind(this), 33);
   }
 
   render()
