@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Image, View, Dimensions, PanResponder } from 'react-native';
 import {LocationOverlay} from './LocationOverlay.js'
+import {PositionOverlay} from './PositionOverlay.js'
 import {Point} from './Utility/Point'
 
 export class MapImage extends Component
@@ -13,6 +14,8 @@ export class MapImage extends Component
     locationsArray: new Array(),
     //Contains the string descriptions of the locations on the map
     descriptionsArray: new Array(),
+    //Reference the current bluetooth handler
+    bleHandler: null
   };
 
   constructor(props)
@@ -315,6 +318,13 @@ export class MapImage extends Component
         source = {{uri:'data:image/jpg;base64,'+this.props.base64ImageData}}
         />
         {LocationsArray}
+        <PositionOverlay
+          bleHandler={this.props.bleHandler}
+          parentPos={this.state.position}
+          parentHeight={this.state.height}
+          parentWidth={this.state.width}
+          defaultParentWidth={this.NORMAL_IMAGE_WIDTH}
+          defaultParentHeight={this.NORMAL_IMAGE_HEIGHT}/>
       </View>
     )
   }

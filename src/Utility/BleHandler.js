@@ -14,7 +14,7 @@ export class BleHandler
         this.device = null;
         this.currentNameIdentifier = null;
 
-        this.signalBeaconArray = {};
+        this.signalBeaconsDictionary = {};
         this.dataBeaconsDictionary = {};
     }
 
@@ -56,38 +56,11 @@ export class BleHandler
                     //Check if the TS beacon to connect to has the correct unique identifier name
                     if(name == this.currentNameIdentifier)
                     {
-                        this.signalBeaconArray[device.id] = device;
+                        this.signalBeaconsDictionary[device.id] = device;
                     }
                 }
             }.bind(this));
         }.bind(this));
-    }
-
-    async updateRSSIValues()
-    {
-        //Stores all the async updates to the RSSI updates
-        let allReadRSSIPromises = new Array(this.signalBeaconArray.length);
-        for(let i = 0; i < this.signalBeaconArray.length; i++)
-        {
-            let beacon = this.signalBeaconArray[i];
-            //store the promise for reading the devices new RSSI value
-            allReadRSSIPromises[i] = beacon.readRSSI();
-            allReadRSSIPromises[i].then(function(device){
-                console.log(device.txPowerLevel + ":" + device.rssi);
-                console.log(device);
-                let exponent = (-31 - device.rssi) / (10 * 3);
-                let distance = Math.pow(10, exponent);
-                console.log('Distance: '+distance);
-                this.signalBeaconArray[i] = device;
-            }.bind(this));
-        }
-
-        //Await all the promises so all values are updated before sorting the list by RSSI values
-        await Promise.all(allReadRSSIPromises);
-        //Sort the list so that the best signal strength is at the top (RSSI values are negative)
-        this.signalBeaconArray.sort(function(a, b){
-            a.rssi > b.rssi;
-        });
     }
 
     //Scans for all devices with the name TS_DataBeacon_... and adds them to the list and calling the callback function when one is added

@@ -5,6 +5,7 @@ import { RotationGestureHandler } from 'react-native-gesture-handler';
 import { BleHandler } from './src/Utility/BleHandler.js'
 import { LoadingScreen } from './src/LoadingScreen.js'
 import { ScanningScreen } from './src/ScanningScreen'
+import { Buffer } from 'buffer'
 
 export default class App extends Component
 {
@@ -42,21 +43,9 @@ export default class App extends Component
     //Gets the location data as an array with point data first and the string descriptions second
     let mapData = await this.bleHandler.readMapImageBase64();
     let locationsData = await this.bleHandler.readLocationsArray();
-    this.setState({componentToRender: <MapImage base64ImageData={mapData} locationsArray={locationsData[0]} descriptionsArray={locationsData[1]} />});
+    this.setState({componentToRender: <MapImage base64ImageData={mapData} locationsArray={locationsData[0]} descriptionsArray={locationsData[1]} bleHandler={this.bleHandler} />});
     //Needs to be after all the data is sent so that the device can be disconnected to only use its advertised data
     this.bleHandler.scanForSignalBeacons();
-
-    setInterval(function()
-    {
-      
-      for(const key of Object.keys(this.bleHandler.signalBeaconArray))
-      {
-        let device = this.bleHandler.signalBeaconArray[key];
-        let exponent = (device.txPowerLevel - device.rssi) / (10 * 3);
-        let distance = Math.pow(10, exponent);
-        console.log('Distance: '+distance);
-      }
-    }.bind(this), 33);
   }
 
   render()
