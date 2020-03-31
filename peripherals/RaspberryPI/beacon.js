@@ -15,7 +15,7 @@ bleno.on('stateChange', function(state)
 
     if(state == 'poweredOn')
     {
-        startAdvertisingBeaconData(NAME, ['fffffffffffffffffffffffffffffff0'], TX_POWER_LEVEL);
+        startAdvertisingBeaconData(NAME, ['fffffffffffffffffffffffffffffff0'], TX_POWER_LEVEL, [12.5, 25.3, 10.6]);
     }
     else
     {
@@ -23,7 +23,7 @@ bleno.on('stateChange', function(state)
     }
 });
 
-function startAdvertisingBeaconData(name, serviceUuids, txPower)
+function startAdvertisingBeaconData(name, serviceUuids, txPower, beaconLocation)
 {
     var advertisementDataLength = 3;
     var scanDataLength = 0;
@@ -40,6 +40,11 @@ function startAdvertisingBeaconData(name, serviceUuids, txPower)
     if(txPower)
     {
         scanDataLength += 3;
+    }
+
+    if(beaconLocation)
+    {
+        advertisementDataLength += 2 + 2 + 4*3;
     }
 
     if(serviceUuids && serviceUuids.length)
@@ -132,6 +137,23 @@ function startAdvertisingBeaconData(name, serviceUuids, txPower)
         scanData.writeUInt8(0x0A, scanDataOffset);
         scanDataOffset++;
         scanData.writeInt8(txPower, scanDataOffset);
+        scanDataOffset++;
+    }
+
+    if(beaconLocation)
+    {
+        advertisementData.writeUInt8(1+2+4*3, advertisementDataOffset);
+        advertisementDataOffset++;
+        advertisementData.writeUInt8(0x16, advertisementDataOffset);
+        advertisementDataOffset++;
+        let UUID = new Buffer('F44F');
+        UUID.copy(advertisementData, advertisementDataOffset);
+        advertisementDataOffset += 2;
+        for(i = 0; i < beaconLocation.length; i++)
+        {
+            advertisementData.writeFloatLE(beaconLocation[i], advertisementDataOffset);
+            advertisementDataOffset += 4;
+        }
     }
 
     bleno.startAdvertisingWithEIRData(advertisementData, scanData);

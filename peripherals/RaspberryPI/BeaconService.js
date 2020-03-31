@@ -7,6 +7,7 @@ const SERVICE_UUID = 'fffffffffffffffffffffffffffffff0';
 var PointLocationsCharacteristic = require('./PointLocationsCharacteristic.js');
 var StringDescriptionsCharacteristic = require('./StringDescriptionsCharacteristic.js');
 var MapImageNotifyCharacteristic = require('./MapImageNotifyCharacteristic.js');
+var MeterToPixelRatioCharacteristic = require('./MeterToPixelRatioCharacteristic.js');
 
 //Setup the Beacon Service with the following characteristics
 function BeaconService() {
@@ -16,6 +17,7 @@ function BeaconService() {
             new PointLocationsCharacteristic(),
             new StringDescriptionsCharacteristic(),
             new MapImageNotifyCharacteristic(),
+            new MeterToPixelRatioCharacteristic()
         ]
     });
 }

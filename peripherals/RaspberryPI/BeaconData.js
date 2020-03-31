@@ -3,6 +3,8 @@ var fs = require('fs');
 var imageData = fs.readFileSync('./floorplan.jpg', 'base64');
 console.log('Successfully loaded image!');
 
+var meterToPixelRatio = 207.5487847
+
 var locationData = Array(630, 420,
                     1000, 800);
 var descriptionData = Array("Bedroom Door", "Living Room Center");
@@ -16,4 +18,5 @@ module.exports =
     locationData: locationData,
     descriptionData: descriptionData,
     currentMTU: currentMTU,
+    meterToPixelRatio: meterToPixelRatio
 }
