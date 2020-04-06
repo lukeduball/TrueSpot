@@ -10,6 +10,8 @@ export class MapImage extends Component
   static defaultProps = {
     //Image data in base64 format
     base64ImageData : null,
+    //The pixel to meter ratio for the map size
+    pixelToMeterRatio: null,
     //Contains point array of all the locaations on the map
     locationsArray: new Array(),
     //Contains the string descriptions of the locations on the map
@@ -320,6 +322,7 @@ export class MapImage extends Component
         {LocationsArray}
         <PositionOverlay
           bleHandler={this.props.bleHandler}
+          pixelToMeterRatio={this.props.pixelToMeterRatio}
           parentPos={this.state.position}
           parentHeight={this.state.height}
           parentWidth={this.state.width}

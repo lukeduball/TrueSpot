@@ -11,6 +11,7 @@ export class BleHandler
         this.LOCATION_POINTS_UUID =         'ffffffff-ffff-ffff-ffff-fffffffffff1';
         this.LOCATION_DESCRIPTIONS_UUID =   'ffffffff-ffff-ffff-ffff-fffffffffff2';
         this.MAP_IMAGE_UUID =               'ffffffff-ffff-ffff-ffff-fffffffffff3';
+        this.PIXEL_RATIO_UUID =             'ffffffff-ffff-ffff-ffff-fffffffffff4';
         this.device = null;
         this.currentNameIdentifier = null;
 
@@ -185,6 +186,21 @@ export class BleHandler
 
         console.log("ERROR: Attempting to access data when no connection was made with a device!");
         //return null if the device is not connected
+        return null;
+    }
+
+    async readMeterToPixelRatio()
+    {
+        //Ensure the device has been connect first
+        if(this.device != null)
+        {
+            //Read the float value meter to pixel ratio from the pixel ratio characteristic
+            let pixelRatioCharacteristic = await this.device.readCharacteristicForService(this.SERVICE_UUID, this.PIXEL_RATIO_UUID);
+            let value = Buffer.from(pixelRatioCharacteristic.value, 'base64');
+            return value.readFloatLE();
+        }
+
+        //return null if a device has not been connected
         return null;
     }
 

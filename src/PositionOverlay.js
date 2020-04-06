@@ -6,6 +6,7 @@ export class PositionOverlay extends Component
 {
     static defaultProps = {
         bleHandler: null,
+        meterToPixelRatio: null,
         parentPos : null,
         parentHeight: 0,
         parentWidth: 0,
@@ -51,7 +52,7 @@ export class PositionOverlay extends Component
             let beacon2 = beaconsArray[1];
             let beacon3 = beaconsArray[2];
             let meterPosition = this.getPositionInMeters(beacon1, beacon2, beacon3);
-            let renderPosition = renderPosition.multiply(meterToPixelRatio);
+            let renderPosition = meterPosition.multiply(this.props.meterToPixelRatio);
             return(
                 <View>
                     <Image
