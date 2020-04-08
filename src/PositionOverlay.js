@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {Image, View} from 'react-native';
 import {Point} from './Utility/Point';
+import {Buffer} from 'buffer'
 
 export class PositionOverlay extends Component
 {
@@ -53,6 +54,7 @@ export class PositionOverlay extends Component
             let beacon3 = beaconsArray[2];
             let meterPosition = this.getPositionInMeters(beacon1, beacon2, beacon3);
             let renderPosition = meterPosition.multiply(this.props.meterToPixelRatio);
+            console.log(renderPosition.x + ":"+renderPosition.y);
             return(
                 <View>
                     <Image
@@ -74,21 +76,22 @@ export class PositionOverlay extends Component
     getBeaconDistance(beacon)
     {
         //Calculate the exponant -- 3 represents a value that can be between 2 and 4 based on the environment
-        let exponent = (beacon.txPowerLevel - beacon.rssi) / (10 * 3);
+        let exponent = (beacon.txPowerLevel - beacon.rssi) / (10 * 5);
         //returns the distance calculated by 10 raised to the calculated exponent
         return Math.pow(10, exponent);
     }
 
     getBeaconLocation(beacon)
     {
+        var x = 0, y = 0;
         for(const key in beacon.serviceData)
         {
           let base64Value = beacon.serviceData[key];
           let buffer = new Buffer(base64Value, 'base64');
-          let x = buffer.slice(0, 4);
-          let y = buffer.slice(4, 8);
-          x = x.readFloatLE();
-          y = y.readFloatLE();
+          let xBuf = buffer.slice(0, 4);
+          let yBuf = buffer.slice(4, 8);
+          x = xBuf.readFloatLE();
+          y = yBuf.readFloatLE();
         }
 
         return new Point(x, y);
@@ -107,12 +110,15 @@ export class PositionOverlay extends Component
         let b1Position = this.getBeaconLocation(b1);
         let b1xSquared = b1Position.x * b1Position.x;
         let b1ySquared = b1Position.y * b1Position.y;
-        let b2Position = this.getBeaconDistance(b2);
+        let b2Position = this.getBeaconLocation(b2);
         let b2xSquared = b2Position.x * b2Position.x;
         let b2ySquared = b2Position.y * b2Position.y;
-        let b3Position = this.getBeaconDistance(b3);
+        let b3Position = this.getBeaconLocation(b3);
         let b3xSquared = b3Position.x * b3Position.x;
         let b3ySquared = b3Position.y * b3Position.y;
+
+        console.log("Radius:"+r1+":"+r2+":"+r3);
+        console.log("Positions:"+b1Position.x+":"+b2Position.x+":"+b3Position.x);
 
         let E12 = (r1Squared - r2Squared - b1xSquared + b2xSquared - b1ySquared + b2ySquared) / 2.0;
         let E23 = (r2Squared - r3Squared - b2xSquared + b3xSquared - b2ySquared + b3ySquared) / 2.0;
@@ -123,7 +129,7 @@ export class PositionOverlay extends Component
         let D = -b2Position.y + b3Position.y;
 
         let x = ((E12*D) + (-B*E23)) / (A*D - C*B);
-        let y = ((-C*E13) + (A*E23)) / (A*D - C*B);
+        let y = ((-C*E12) + (A*E23)) / (A*D - C*B);
 
         return new Point(x, y);
     }
