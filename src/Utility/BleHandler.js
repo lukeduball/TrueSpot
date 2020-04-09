@@ -57,7 +57,17 @@ export class BleHandler
                     //Check if the TS beacon to connect to has the correct unique identifier name
                     if(name == this.currentNameIdentifier)
                     {
-                        this.signalBeaconsDictionary[device.id] = device;
+                        //Checks to see if the device is already in the dictionary
+                        if(this.signalBeaconsDictionary[device.id] == undefined)
+                        {
+                            this.signalBeaconsDictionary[device.id] = {device: device, rssi: device.rssi};
+                        }
+                        else
+                        {
+                            let oldRSSI = this.signalBeaconsDictionary[device.id]['rssi'];
+                            //Causes the RSSI to be strongly weighted toward the old value, this interpolates over rssi values so outlier values do not cause as much difference
+                            this.signalBeaconsDictionary[device.id] = {device: device, rssi: oldRSSI * 0.7 + device.rssi * 0.3};
+                        }
                     }
                 }
             }.bind(this));
@@ -67,11 +77,24 @@ export class BleHandler
     //Scans for all devices with the name TS_DataBeacon_... and adds them to the list and calling the callback function when one is added
     scanForDataBeacons(callback)
     {
-        //Every two seconds, clear the data beacon list so that beacons no longer in range will not be detected
+        //Every second, check if an entry has become stale and remove it from the list, mark all entries in the list as stale
         this.dataBeaconClearInterval = setInterval(function()
         {
-            this.dataBeaconsDictionary = {};
-        }.bind(this), 2000);
+            //Iterate through all the data beacons stored in the dictionary
+            for(const key in this.dataBeaconsDictionary)
+            {
+                let entry = this.dataBeaconsDictionary[key];
+                //Remove stale entries
+                if(entry.stale == true)
+                {
+                    delete entry;
+                }
+                else
+                {
+                    entry.stale = true;
+                }
+            }
+        }.bind(this), 500);
 
         this.bluetoothManager.startDeviceScan(null, null, function(error, device)
         {
@@ -94,14 +117,16 @@ export class BleHandler
                         //Check if the rssi value is lower than the previous (rssi value is negative) if it is update the entry
                         if(device.rssi > this.dataBeaconsDictionary[''+device.name].rssi)
                         {
-                            this.dataBeaconsDictionary[''+device.name] = device;
+                            this.dataBeaconsDictionary[''+device.name] = {device: device, stale: false};
                             callback();
                         }
                     }
+                    //Since the device has been scanned again, set its stale status to false
+                    this.dataBeaconsDictionary[device.name].stale = false;
                 }
                 else
                 {
-                    this.dataBeaconsDictionary[''+device.name] = device;
+                    this.dataBeaconsDictionary[''+device.name] = {device: device, stale: false};
                     callback();
                 }
             }
@@ -126,8 +151,6 @@ export class BleHandler
             //Sets the device as the current device
             this.device = device;
             this.currentNameIdentifier = device.name.split('_')[2];
-            //Add the current beacon device to the signal array
-            //this.signalBeaconArray.push(device);
             //Calls the callback function to alert that it has connected to a device
             callback();
         //In order to call functions from this class, this must be bound to the function because the scope of the function is within the context of device

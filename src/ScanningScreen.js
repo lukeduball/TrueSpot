@@ -42,7 +42,7 @@ export class ScanningScreen extends Component
         const keys = Object.keys(this.props.bleHandler.dataBeaconsDictionary);
         for(const key of keys)
         {
-            let device = this.props.bleHandler.dataBeaconsDictionary[key];
+            let device = this.props.bleHandler.dataBeaconsDictionary[key].device;
             //Removes the TS_DataBeacon_ to extract the unique part of the name
             let name = device.name.split("_")[2];
             data.push({key: name, device: device});

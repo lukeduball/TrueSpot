@@ -20,6 +20,12 @@ export class PositionOverlay extends Component
         super(props);
 
         this.NORMAL_SIZE = 33;
+
+        //Sets the position marker to update every 66 ms
+        setInterval(function()
+        {
+            this.forceUpdate();
+        }.bind(this), 66);
     }
 
     //Returns the scaled coordinate by converting from local image space to screen space
@@ -73,10 +79,10 @@ export class PositionOverlay extends Component
         return null;
     }
 
-    getBeaconDistance(beacon)
+    getBeaconDistance(beaconRSSI)
     {
         //Calculate the exponant -- 3 represents a value that can be between 2 and 4 based on the environment
-        let exponent = (beacon.txPowerLevel - beacon.rssi) / (10 * 5);
+        let exponent = (beacon.txPowerLevel - beaconRSSI) / (10 * 5);
         //returns the distance calculated by 10 raised to the calculated exponent
         return Math.pow(10, exponent);
     }
@@ -86,12 +92,15 @@ export class PositionOverlay extends Component
         var x = 0, y = 0;
         for(const key in beacon.serviceData)
         {
-          let base64Value = beacon.serviceData[key];
-          let buffer = new Buffer(base64Value, 'base64');
-          let xBuf = buffer.slice(0, 4);
-          let yBuf = buffer.slice(4, 8);
-          x = xBuf.readFloatLE();
-          y = yBuf.readFloatLE();
+            //Reads in the position value of the beacon from its advertising data
+            let base64Value = beacon.serviceData[key];
+            let buffer = new Buffer(base64Value, 'base64');
+            //the x value is the first 4 bytes
+            let xBuf = buffer.slice(0, 4);
+            //the y value is the bytes 4 to 8
+            let yBuf = buffer.slice(4, 8);
+            x = xBuf.readFloatLE();
+            y = yBuf.readFloatLE();
         }
 
         return new Point(x, y);
@@ -99,27 +108,29 @@ export class PositionOverlay extends Component
 
     getPositionInMeters(b1, b2, b3)
     {
-        let r1 = this.getBeaconDistance(b1);
-        let r2 = this.getBeaconDistance(b2);
-        let r3 = this.getBeaconDistance(b3);
+        //Gets the distance away from each beacon in meters
+        let r1 = this.getBeaconDistance(b1.rssi);
+        let r2 = this.getBeaconDistance(b2.rssi);
+        let r3 = this.getBeaconDistance(b3.rssi);
 
         let r1Squared = r1*r1;
         let r2Squared = r2*r2;
         let r3Squared = r3*r3;
 
-        let b1Position = this.getBeaconLocation(b1);
+        //Gets the position (x and y coordinate) of each beacon in meters
+        let b1Position = this.getBeaconLocation(b1.device);
         let b1xSquared = b1Position.x * b1Position.x;
         let b1ySquared = b1Position.y * b1Position.y;
-        let b2Position = this.getBeaconLocation(b2);
+        let b2Position = this.getBeaconLocation(b2.device);
         let b2xSquared = b2Position.x * b2Position.x;
         let b2ySquared = b2Position.y * b2Position.y;
-        let b3Position = this.getBeaconLocation(b3);
+        let b3Position = this.getBeaconLocation(b3.device);
         let b3xSquared = b3Position.x * b3Position.x;
         let b3ySquared = b3Position.y * b3Position.y;
 
         console.log("Radius:"+r1+":"+r2+":"+r3);
-        console.log("Positions:"+b1Position.x+":"+b2Position.x+":"+b3Position.x);
 
+        //Solves the matrix equation of the overlapping circles of beacon 1 and 2 and beacons 2 and 3 to find the current position of the user
         let E12 = (r1Squared - r2Squared - b1xSquared + b2xSquared - b1ySquared + b2ySquared) / 2.0;
         let E23 = (r2Squared - r3Squared - b2xSquared + b3xSquared - b2ySquared + b3ySquared) / 2.0;
 
