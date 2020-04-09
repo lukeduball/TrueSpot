@@ -45,4 +45,6 @@ target 'TrueSpot' do
   use_unimodules!
   pod 'react-native-ble-plx', :path => '../node_modules/react-native-ble-plx'
 
+  pod 'react-native-bg-thread', :path => '../node_modules/react-native-bg-thread'
+
 end

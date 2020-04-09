@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import {View, TouchableOpacity, FlatList, StyleSheet, Alert, Text } from 'react-native';
+import RnBgTask from "react-native-bg-thread"
 
 //Display component for each list item
 function Item({name, device, pressFunction}) {
@@ -24,14 +25,18 @@ export class ScanningScreen extends Component
     {
         super(props);
 
-        //Start scanning for data beacon devices
-        this.props.bleHandler.scanForDataBeacons(this.updateList.bind(this));
+        RnBgTask.runInBackground(function(){
+            //Start scanning for data beacon devices
+            this.props.bleHandler.scanForDataBeacons(this.updateList.bind(this));
+        }.bind(this));
 
-        //Every 2 seconds, the data beacons list is marked as stale, any already stale(disconnect or out of range) beacons are removed from the list
-        this.dataBeaconClearInterval = setInterval(function()
-        {
-            this.props.bleHandler.markAndRemoveStaleDataBeacons(this.updateList.bind(this));
-        }.bind(this), 2000);
+        RnBgTask.runInBackground(function(){
+            //Every 2 seconds, the data beacons list is marked as stale, any already stale(disconnect or out of range) beacons are removed from the list
+            this.dataBeaconClearInterval = setInterval(function()
+            {
+                this.props.bleHandler.markAndRemoveStaleDataBeacons(this.updateList.bind(this));
+            }.bind(this), 2000);
+        }.bind(this));
     }
 
     componentWillUnmount()

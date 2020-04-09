@@ -33,7 +33,7 @@ project.xcworkspace
 #Android
 build/
 .idea
-.grandle
+.gradle
 local.properties
 *.iml
 
