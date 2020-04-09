@@ -79,7 +79,7 @@ export class PositionOverlay extends Component
         return null;
     }
 
-    getBeaconDistance(beaconRSSI)
+    getBeaconDistance(beacon, beaconRSSI)
     {
         //Calculate the exponant -- 3 represents a value that can be between 2 and 4 based on the environment
         let exponent = (beacon.txPowerLevel - beaconRSSI) / (10 * 5);
@@ -109,9 +109,9 @@ export class PositionOverlay extends Component
     getPositionInMeters(b1, b2, b3)
     {
         //Gets the distance away from each beacon in meters
-        let r1 = this.getBeaconDistance(b1.rssi);
-        let r2 = this.getBeaconDistance(b2.rssi);
-        let r3 = this.getBeaconDistance(b3.rssi);
+        let r1 = this.getBeaconDistance(b1.device, b1.rssi);
+        let r2 = this.getBeaconDistance(b1.device, b2.rssi);
+        let r3 = this.getBeaconDistance(b1.device, b3.rssi);
 
         let r1Squared = r1*r1;
         let r2Squared = r2*r2;

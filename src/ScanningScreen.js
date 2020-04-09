@@ -26,6 +26,18 @@ export class ScanningScreen extends Component
 
         //Start scanning for data beacon devices
         this.props.bleHandler.scanForDataBeacons(this.updateList.bind(this));
+
+        //Every 2 seconds, the data beacons list is marked as stale, any already stale(disconnect or out of range) beacons are removed from the list
+        this.dataBeaconClearInterval = setInterval(function()
+        {
+            this.props.bleHandler.markAndRemoveStaleDataBeacons(this.updateList.bind(this));
+        }.bind(this), 2000);
+    }
+
+    componentWillUnmount()
+    {
+        //Stop the timer once this component is unmounted and no longer needed
+        clearInterval(this.dataBeaconClearInterval);
     }
 
     //This is a callback function that will be called once a new beacon is added to the list

@@ -74,28 +74,29 @@ export class BleHandler
         }.bind(this));
     }
 
+    //Marks data beacons in the list as stale, removes all data beacons which have already been marked as stale
+    markAndRemoveStaleDataBeacons(callback)
+    {
+        //Iterate through all the data beacons stored in the dictionary
+        for(const key in this.dataBeaconsDictionary)
+        {
+            //Remove stale entries
+            if(this.dataBeaconsDictionary[key].stale == true)
+            {
+                delete this.dataBeaconsDictionary[key];
+                callback();
+            }
+            else
+            {
+                this.dataBeaconsDictionary[key].stale = true;
+            }
+        }
+    }
+
     //Scans for all devices with the name TS_DataBeacon_... and adds them to the list and calling the callback function when one is added
     scanForDataBeacons(callback)
     {
-        //Every second, check if an entry has become stale and remove it from the list, mark all entries in the list as stale
-        this.dataBeaconClearInterval = setInterval(function()
-        {
-            //Iterate through all the data beacons stored in the dictionary
-            for(const key in this.dataBeaconsDictionary)
-            {
-                let entry = this.dataBeaconsDictionary[key];
-                //Remove stale entries
-                if(entry.stale == true)
-                {
-                    delete entry;
-                }
-                else
-                {
-                    entry.stale = true;
-                }
-            }
-        }.bind(this), 500);
-
+        this.timeArray = new Array();
         this.bluetoothManager.startDeviceScan(null, null, function(error, device)
         {
             if(error)
@@ -112,12 +113,12 @@ export class BleHandler
                 if(device.name in this.dataBeaconsDictionary)
                 {
                     //Checks if the device we are checking is already added to the dictionary 
-                    if(device.id != this.dataBeaconsDictionary[''+device.name].id)
+                    if(device.id != this.dataBeaconsDictionary[device.name].id)
                     {
                         //Check if the rssi value is lower than the previous (rssi value is negative) if it is update the entry
-                        if(device.rssi > this.dataBeaconsDictionary[''+device.name].rssi)
+                        if(device.rssi > this.dataBeaconsDictionary[device.name].rssi)
                         {
-                            this.dataBeaconsDictionary[''+device.name] = {device: device, stale: false};
+                            this.dataBeaconsDictionary[device.name] = {device: device, stale: false};
                             callback();
                         }
                     }
@@ -126,7 +127,7 @@ export class BleHandler
                 }
                 else
                 {
-                    this.dataBeaconsDictionary[''+device.name] = {device: device, stale: false};
+                    this.dataBeaconsDictionary[device.name] = {device: device, stale: false};
                     callback();
                 }
             }
