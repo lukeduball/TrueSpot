@@ -21,6 +21,7 @@ export class BleHandler
 
     cleanUp()
     {
+        console.log(this.timeArray);
         this.bluetoothManager.destroy();
     }
 
@@ -97,8 +98,10 @@ export class BleHandler
     scanForDataBeacons(callback)
     {
         this.timeArray = new Array();
+
         this.bluetoothManager.startDeviceScan(null, null, function(error, device)
         {
+            this.timeArray.push(new Date().getMilliseconds());
             if(error)
             {
                 console.log(error.message);
@@ -119,7 +122,6 @@ export class BleHandler
                         if(device.rssi > this.dataBeaconsDictionary[device.name].rssi)
                         {
                             this.dataBeaconsDictionary[device.name] = {device: device, stale: false};
-                            callback();
                         }
                     }
                     //Since the device has been scanned again, set its stale status to false

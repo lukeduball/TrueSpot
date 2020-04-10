@@ -25,17 +25,17 @@ export class ScanningScreen extends Component
     {
         super(props);
 
+        //Start scanning for data beacon devices
         RnBgTask.runInBackground(function(){
-            //Start scanning for data beacon devices
             this.props.bleHandler.scanForDataBeacons(this.updateList.bind(this));
         }.bind(this));
-
+        
+        //Every 2 seconds, the data beacons list is marked as stale, any already stale(disconnect or out of range) beacons are removed from the list
         RnBgTask.runInBackground(function(){
-            //Every 2 seconds, the data beacons list is marked as stale, any already stale(disconnect or out of range) beacons are removed from the list
             this.dataBeaconClearInterval = setInterval(function()
             {
                 this.props.bleHandler.markAndRemoveStaleDataBeacons(this.updateList.bind(this));
-            }.bind(this), 2000);
+            }.bind(this), 3000);
         }.bind(this));
     }
 

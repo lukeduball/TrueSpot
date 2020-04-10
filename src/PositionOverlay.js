@@ -25,7 +25,7 @@ export class PositionOverlay extends Component
         setInterval(function()
         {
             this.forceUpdate();
-        }.bind(this), 66);
+        }.bind(this), 200);
     }
 
     //Returns the scaled coordinate by converting from local image space to screen space
@@ -60,7 +60,6 @@ export class PositionOverlay extends Component
             let beacon3 = beaconsArray[2];
             let meterPosition = this.getPositionInMeters(beacon1, beacon2, beacon3);
             let renderPosition = meterPosition.multiply(this.props.meterToPixelRatio);
-            console.log(renderPosition.x + ":"+renderPosition.y);
             return(
                 <View>
                     <Image
@@ -128,7 +127,7 @@ export class PositionOverlay extends Component
         let b3xSquared = b3Position.x * b3Position.x;
         let b3ySquared = b3Position.y * b3Position.y;
 
-        console.log("Radius:"+r1+":"+r2+":"+r3);
+        //console.log("Radius:"+r1+":"+r2+":"+r3);
 
         //Solves the matrix equation of the overlapping circles of beacon 1 and 2 and beacons 2 and 3 to find the current position of the user
         let E12 = (r1Squared - r2Squared - b1xSquared + b2xSquared - b1ySquared + b2ySquared) / 2.0;
