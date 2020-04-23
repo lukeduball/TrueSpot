@@ -21,9 +21,17 @@ export class PositionOverlay extends Component
 
         this.NORMAL_SIZE = 33;
 
-        //Sets the position marker to update every 66 ms
+        //Sets the position marker to update every 200 ms
         setInterval(function()
         {
+            for(const key in this.props.bleHandler.signalBeaconsDictionary)
+            {
+                if(this.props.bleHandler.signalBeaconsDictionary[key].device.rssi != this.props.bleHandler.signalBeaconsDictionary[key].lastRSSI)
+                {
+                    this.props.bleHandler.signalBeaconsDictionary[key].lastRSSI = this.props.bleHandler.signalBeaconsDictionary[key].device.rssi;
+                    this.props.bleHandler.signalBeaconsDictionary[key].rssi = this.props.bleHandler.signalBeaconsDictionary[key].rssi * 0.7 + this.props.bleHandler.signalBeaconsDictionary[key].device.rssi * 0.3;
+                }
+            }
             this.forceUpdate();
         }.bind(this), 200);
     }
@@ -81,7 +89,7 @@ export class PositionOverlay extends Component
     getBeaconDistance(beacon, beaconRSSI)
     {
         //Calculate the exponant -- 3 represents a value that can be between 2 and 4 based on the environment
-        let exponent = (beacon.txPowerLevel - beaconRSSI) / (10 * 5);
+        let exponent = (beacon.txPowerLevel - beaconRSSI) / (10 * 4.5);
         //returns the distance calculated by 10 raised to the calculated exponent
         return Math.pow(10, exponent);
     }
@@ -100,6 +108,7 @@ export class PositionOverlay extends Component
             let yBuf = buffer.slice(4, 8);
             x = xBuf.readFloatLE();
             y = yBuf.readFloatLE();
+            console.log(x + ":" + y + ":"+beacon.id)
         }
 
         return new Point(x, y);

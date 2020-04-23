@@ -41,7 +41,7 @@ export class BleHandler
     scanForSignalBeacons()
     {
         this.device.cancelConnection().then(function(){
-            this.bluetoothManager.startDeviceScan(null, null, function(error, device)
+            this.bluetoothManager.startDeviceScan([this.SERVICE_UUID], null, function(error, device)
             {
                 if(error)
                 {
@@ -61,13 +61,13 @@ export class BleHandler
                         //Checks to see if the device is already in the dictionary
                         if(this.signalBeaconsDictionary[device.id] == undefined)
                         {
-                            this.signalBeaconsDictionary[device.id] = {device: device, rssi: device.rssi};
+                            this.signalBeaconsDictionary[device.id] = {device: device, rssi: device.rssi, lastRSSI: 0.0};
                         }
                         else
                         {
                             let oldRSSI = this.signalBeaconsDictionary[device.id]['rssi'];
-                            //Causes the RSSI to be strongly weighted toward the old value, this interpolates over rssi values so outlier values do not cause as much difference
-                            this.signalBeaconsDictionary[device.id] = {device: device, rssi: oldRSSI * 0.7 + device.rssi * 0.3};
+                            let formerRSSI = this.signalBeaconsDictionary[device.id].lastRSSI;
+                            this.signalBeaconsDictionary[device.id] = {device: device, rssi: oldRSSI, lastRSSI: formerRSSI};
                         }
                     }
                 }
